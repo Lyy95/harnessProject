@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>知识库</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="left-panel">
+      <div class="panel-header">
+        <h2>文档列表</h2>
+        <button id="btn-new-doc">+ 新建</button>
+      </div>
+      <ul id="doc-list"></ul>
+    </div>
+    <div class="divider"></div>
+    <div id="right-panel">
+      <div id="doc-viewer" class="hidden">
+        <div class="panel-header">
+          <h2 id="doc-title"></h2>
+          <div>
+            <button id="btn-save-doc">保存</button>
+            <button id="btn-delete-doc" class="danger">删除</button>
+            <button id="btn-close-doc">关闭</button>
+          </div>
+        </div>
+        <textarea id="doc-content"></textarea>
+      </div>
+      <div id="qa-panel">
+        <div class="panel-header"><h2>问答面板</h2></div>
+        <div id="qa-list"></div>
+        <div id="qa-input-area">
+          <input id="qa-question" placeholder="输入问题..." />
+          <input id="qa-answer" placeholder="输入回答..." />
+          <button id="btn-add-qa">添加问答</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

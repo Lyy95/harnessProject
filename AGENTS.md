@@ -1,0 +1,59 @@
+# AGENTS.md
+
+这个仓库面向长时运行的 coding agent 工作流。目标是构建一个 Electron 知识库应用。
+
+## 项目概览
+
+- **技术栈**：Node.js + Electron
+- **启动命令**：`npm start`（即 `electron .`）
+- **主进程**：`main.js` — 窗口创建、本地数据目录、IPC 处理
+- **预加载**：`preload.js` — contextBridge 暴露 API
+- **渲染进程**：`index.html` + `style.css` + `renderer.js`
+- **数据目录**：`app.getPath('userData')/kb-data/`
+
+## Electron 边界规则
+
+- 主进程和渲染进程隔离，必须通过 preload.js 的 contextBridge 通信
+- 不要在渲染进程中使用 `require('electron')` 或 Node.js API
+- 所有文件系统操作必须在主进程中通过 IPC handler 完成
+- 窗口 webPreferences：`contextIsolation: true, nodeIntegration: false`
+
+## 开工流程
+
+写代码前先做这些事：
+
+1. 用 `pwd` 确认当前目录。
+2. 读取 `claude-progress.md`，了解最新已验证状态和下一步。
+3. 读取 `feature_list.json`，选择优先级最高的未完成功能。
+4. 用 `git log --oneline -5` 看最近提交。
+5. 运行 `./init.sh`。
+6. 在开始新功能前，先跑必需的 smoke test 或端到端验证。
+
+如果 `init.sh` 初始就失败，先修基础状态，不要在坏的起点上继续叠新功能。
+
+## 工作规则
+
+- 一次只做一个功能。
+- 不要因为"代码已经写了"就把功能标记为完成。
+- 除非为了消除当前 blocker 的窄范围修复，否则不要扩大到其他功能。
+- 实现过程中不要悄悄改弱验证规则。
+- 优先依赖仓库里的持久化文件，而不是聊天记录。
+
+## 完成定义
+
+一个功能只有在以下条件都满足时才算完成：
+
+- 目标行为已经实现
+- 要求的验证真的跑过
+- 证据记录在 `feature_list.json` 或 `claude-progress.md`
+- `./init.sh` 能正常运行
+
+## 收尾
+
+结束会话前：
+
+1. 更新 `claude-progress.md`
+2. 更新 `feature_list.json`
+3. 记录仍未解决的风险或 blocker
+4. 在工作处于安全状态后，用清晰的提交信息提交
+5. 保证下一轮会话可以直接运行 `./init.sh`

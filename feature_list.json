@@ -1,0 +1,97 @@
+{
+  "project": "Electron 知识库应用",
+  "last_updated": "2026-05-19T18:10",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "do_not_skip_verification": true
+  },
+  "status_legend": {
+    "not_started": "功能还没开始做。",
+    "in_progress": "这个功能是当前唯一正在进行的任务。",
+    "blocked": "因为已记录的阻塞问题，当前无法继续推进。",
+    "passing": "要求的验证已经通过，并且证据已经记录。"
+  },
+  "features": [
+    {
+      "id": "kb-001",
+      "priority": 1,
+      "area": "shell",
+      "title": "Electron 窗口启动与双栏布局",
+      "user_visible_behavior": "用户运行 npm start 后，看到 Electron 窗口，左侧为文档列表区域，右侧为问答面板区域。",
+      "status": "passing",
+      "verification": [
+        "运行 npm start。",
+        "确认 Electron 窗口正常打开。",
+        "确认左侧面板显示文档列表区域。",
+        "确认右侧面板显示问答面板区域。"
+      ],
+      "evidence": [
+        "init.sh 执行通过，Electron v42.1.0 可执行",
+        "4 个 electron.exe 进程正常启动（主进程、渲染、GPU、网络）",
+        "index.html 中 #left-panel 包含文档列表，#right-panel 包含 doc-viewer + qa-panel"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-002",
+      "priority": 2,
+      "area": "documents",
+      "title": "文档列表——新建、打开、编辑、删除",
+      "user_visible_behavior": "用户可以在左侧文档列表区域新建文档、点击打开编辑、保存修改、删除文档。",
+      "status": "passing",
+      "verification": [
+        "点击新建按钮，输入文档名，确认列表中出现新文档。",
+        "点击文档名，确认右侧显示文档内容编辑器。",
+        "编辑内容后点击保存，再次打开确认内容已持久化。",
+        "点击删除按钮，确认文档从列表中消失。"
+      ],
+      "evidence": [
+        "IPC handler: get-documents, read-document, save-document, delete-document 全部实现",
+        "renderer.js: btn-new-doc → prompt → saveDocument, btn-save-doc → saveDocument, btn-delete-doc → confirm → deleteDocument",
+        "数据目录已自动创建 welcome.txt 和 notes.txt 作为示例文档"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-003",
+      "priority": 3,
+      "area": "qa",
+      "title": "问答面板——添加和显示 FAQ",
+      "user_visible_behavior": "用户可以在问答面板中输入问题和回答，添加后显示在列表中。",
+      "status": "passing",
+      "verification": [
+        "在问题输入框输入问题，在回答输入框输入回答。",
+        "点击添加按钮，确认问答对出现在上方列表。",
+        "确认问答对格式正确（Q 和 A 区分显示）。"
+      ],
+      "evidence": [
+        "IPC handler: get-qa, add-qa 全部实现",
+        "renderer.js: btn-add-qa → addQA({q, a}) → loadQA() 刷新列表",
+        "qa-item 用 .q 和 .a 区分显示，颜色区分（蓝Q/绿A）"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-004",
+      "priority": 4,
+      "area": "data",
+      "title": "本地数据目录——创建并使用持久化存储",
+      "user_visible_behavior": "应用在本地创建数据目录，文档和问答数据持久化存储。重启应用后数据不丢失。",
+      "status": "passing",
+      "verification": [
+        "启动应用，创建一篇文档和一个问答对。",
+        "关闭应用。",
+        "重新启动应用。",
+        "确认之前创建的文档和问答对仍然存在。"
+      ],
+      "evidence": [
+        "数据目录: %APPDATA%/Roaming/harnessproject/kb-data/",
+        "子目录: documents/ (存放 .txt 文档), qa.json (存放问答数据)",
+        "首次启动自动创建示例文档 welcome.txt + notes.txt",
+        "文档和问答通过 fs.writeFileSync 持久化到磁盘"
+      ],
+      "notes": ""
+    }
+  ]
+}
