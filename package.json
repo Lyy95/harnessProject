@@ -1,0 +1,25 @@
+{
+  "name": "harnessproject",
+  "version": "1.0.0",
+  "description": "Knowledge base app with Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lyy95/harnessProject.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Lyy95/harnessProject/issues"
+  },
+  "homepage": "https://github.com/Lyy95/harnessProject#readme",
+  "devDependencies": {
+    "electron": "^42.1.0"
+  }
+}
