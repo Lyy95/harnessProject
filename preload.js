@@ -12,4 +12,9 @@ contextBridge.exposeInMainWorld('kbAPI', {
   getDocumentInfo: (filePath) => ipcRenderer.invoke('get-document-info', filePath),
   logImport: (files) => ipcRenderer.invoke('log-import', files),
   getImports: () => ipcRenderer.invoke('get-imports'),
+  indexAllDocuments: () => ipcRenderer.invoke('index-all-documents'),
+  getIndexStatus: () => ipcRenderer.invoke('get-index-status'),
+  searchChunks: (query) => ipcRenderer.invoke('search-chunks', query),
+  getDocumentMeta: (docName) => ipcRenderer.invoke('get-document-meta', docName),
+  deleteDocumentIndex: (docName) => ipcRenderer.invoke('delete-document-index', docName),
 });

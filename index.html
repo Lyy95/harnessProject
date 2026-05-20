@@ -14,9 +14,13 @@
         <div>
           <button id="btn-import-doc">导入</button>
           <button id="btn-new-doc">+ 新建</button>
+          <button id="btn-rebuild-index">重建索引</button>
         </div>
       </div>
       <ul id="doc-list"></ul>
+      <div id="index-status">
+        <span id="index-status-text">未索引</span>
+      </div>
     </div>
     <div class="divider"></div>
     <div id="right-panel">
@@ -36,11 +40,24 @@
       </div>
       <div id="qa-panel">
         <div class="panel-header"><h2>问答面板</h2></div>
-        <div id="qa-list"></div>
-        <div id="qa-input-area">
-          <input id="qa-question" placeholder="输入问题..." />
-          <input id="qa-answer" placeholder="输入回答..." />
-          <button id="btn-add-qa">添加问答</button>
+        <div class="qa-tabs">
+          <button id="tab-manual-qa" class="qa-tab active">手动 FAQ</button>
+          <button id="tab-smart-qa" class="qa-tab">智能问答</button>
+        </div>
+        <div id="qa-manual">
+          <div id="qa-list"></div>
+          <div id="qa-input-area">
+            <input id="qa-question" placeholder="输入问题..." />
+            <input id="qa-answer" placeholder="输入回答..." />
+            <button id="btn-add-qa">添加问答</button>
+          </div>
+        </div>
+        <div id="qa-smart" class="hidden">
+          <div id="smart-qa-input-area">
+            <input id="smart-query" placeholder="输入问题，搜索文档..." />
+            <button id="btn-search-qa">搜索</button>
+          </div>
+          <div id="smart-qa-results"></div>
         </div>
       </div>
     </div>
