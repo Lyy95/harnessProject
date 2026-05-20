@@ -112,7 +112,7 @@
         "renderer.js: btn-import-doc 事件绑定，导入后刷新列表",
         "init.sh 通过，Electron v42.1.0 可执行"
       ],
-      "notes": "会话A只完成了kb-005，kb-006和kb-007留给下个会话"
+      "notes": ""
     },
     {
       "id": "kb-006",
@@ -120,15 +120,23 @@
       "area": "documents",
       "title": "文档详情页——元数据展示 + 查看/编辑切换",
       "user_visible_behavior": "用户点击文档后，看到文档详情页，包含文件大小和修改时间，默认查看模式，可切换到编辑模式。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "点击文档名，确认右侧显示详情视图。",
         "确认显示文件大小和修改时间。",
         "默认查看模式，点击「编辑」切换到编辑模式。",
         "编辑后保存，切回查看模式，确认元数据已更新。"
       ],
-      "evidence": [],
-      "notes": "需要 get-document-info IPC handler + 查看/编辑模式切换"
+      "evidence": [
+        "main.js: 新增 get-document-info IPC handler，返回 size + mtime",
+        "preload.js: 暴露 getDocumentInfo() API",
+        "index.html: 新增 #btn-toggle-mode、#doc-meta、#doc-view-content，textarea 默认隐藏",
+        "style.css: 新增 #doc-meta 元数据栏 + #doc-view-content 只读区样式",
+        "renderer.js: 新增 view/edit 模式切换、formatFileSize/formatMtime/updateMeta 辅助函数",
+        "保存后自动切回查看模式并刷新元数据时间戳",
+        "init.sh 通过，Electron v42.1.0 可执行"
+      ],
+      "notes": ""
     },
     {
       "id": "kb-007",
@@ -136,14 +144,20 @@
       "area": "data",
       "title": "导入持久化——记录导入历史到 imports.json",
       "user_visible_behavior": "每次导入操作自动记录到 imports.json，包含导入时间和文件列表。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "导入一个文件。",
         "确认 imports.json 文件中新增一条记录，包含时间和文件名。",
         "重启应用后，导入记录仍然存在。"
       ],
-      "evidence": [],
-      "notes": "需要 log-import + get-imports IPC handlers"
+      "evidence": [
+        "main.js: 新增 log-import handler，写入 imports.json（含 time + files 字段）",
+        "main.js: 新增 get-imports handler，读取 imports.json 返回数组",
+        "preload.js: 暴露 logImport() 和 getImports() API",
+        "renderer.js: 导入成功后自动调用 logImport() 记录历史",
+        "init.sh 通过，Electron v42.1.0 可执行"
+      ],
+      "notes": ""
     }
   ]
 }

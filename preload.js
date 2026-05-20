@@ -10,4 +10,6 @@ contextBridge.exposeInMainWorld('kbAPI', {
   importDocument: () => ipcRenderer.invoke('import-document'),
   getDataDir: () => ipcRenderer.invoke('get-data-dir'),
   getDocumentInfo: (filePath) => ipcRenderer.invoke('get-document-info', filePath),
+  logImport: (files) => ipcRenderer.invoke('log-import', files),
+  getImports: () => ipcRenderer.invoke('get-imports'),
 });

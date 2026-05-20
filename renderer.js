@@ -106,6 +106,7 @@ document.getElementById('btn-delete-doc').addEventListener('click', async () => 
 document.getElementById('btn-import-doc').addEventListener('click', async () => {
   const imported = await window.kbAPI.importDocument();
   if (imported.length > 0) {
+    await window.kbAPI.logImport(imported);
     alert(`已导入 ${imported.length} 个文件`);
     loadDocList();
   }

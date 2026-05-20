@@ -112,3 +112,24 @@ ipcMain.handle('get-document-info', (_event, filePath) => {
     mtime: stats.mtime.toISOString(),
   };
 });
+
+ipcMain.handle('log-import', (_event, files) => {
+  const importsFile = path.join(dataDir, 'imports.json');
+  const record = {
+    time: new Date().toISOString(),
+    files: files.map((f) => f.name),
+  };
+  let imports = [];
+  if (fs.existsSync(importsFile)) {
+    imports = JSON.parse(fs.readFileSync(importsFile, 'utf-8'));
+  }
+  imports.push(record);
+  fs.writeFileSync(importsFile, JSON.stringify(imports, null, 2));
+  return imports;
+});
+
+ipcMain.handle('get-imports', () => {
+  const importsFile = path.join(dataDir, 'imports.json');
+  if (!fs.existsSync(importsFile)) return [];
+  return JSON.parse(fs.readFileSync(importsFile, 'utf-8'));
+});
