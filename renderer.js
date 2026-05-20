@@ -10,8 +10,13 @@ const qaList = document.getElementById('qa-list');
 const qaQuestion = document.getElementById('qa-question');
 const qaAnswer = document.getElementById('qa-answer');
 
+const convSelector = document.getElementById('conv-selector');
+const btnNewConv = document.getElementById('btn-new-conv');
+const btnDeleteConv = document.getElementById('btn-delete-conv');
+
 let currentDoc = null;
 let isEditMode = false;
+let currentConvId = null;
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
@@ -136,10 +141,80 @@ document.getElementById('btn-new-doc').addEventListener('click', async () => {
   loadDocList();
 });
 
+async function loadConversations() {
+  const convs = await window.kbAPI.getConversations();
+  convSelector.innerHTML = '';
+  convs.forEach((conv) => {
+    const opt = document.createElement('option');
+    opt.value = conv.id;
+    opt.textContent = conv.name;
+    convSelector.appendChild(opt);
+  });
+  return convs;
+}
+
+convSelector.addEventListener('change', async () => {
+  const id = convSelector.value;
+  if (!id) return;
+  currentConvId = id;
+  const conv = await window.kbAPI.getConversation(id);
+  loadQAFromMessages(conv.messages);
+});
+
+btnNewConv.addEventListener('click', async () => {
+  const name = prompt('输入对话名称：');
+  if (!name) return;
+  const conv = await window.kbAPI.createConversation(name);
+  await loadConversations();
+  convSelector.value = conv.id;
+  currentConvId = conv.id;
+  loadQAFromMessages([]);
+});
+
+btnDeleteConv.addEventListener('click', async () => {
+  const id = convSelector.value;
+  if (!id) return;
+  const name = convSelector.selectedOptions[0].textContent;
+  if (!confirm(`确定删除对话「${name}」吗？`)) return;
+  await window.kbAPI.deleteConversation(id);
+  const convs = await loadConversations();
+  if (convs.length > 0) {
+    convSelector.value = convs[0].id;
+    currentConvId = convs[0].id;
+    const conv = await window.kbAPI.getConversation(convs[0].id);
+    loadQAFromMessages(conv.messages);
+  } else {
+    currentConvId = null;
+    qaList.innerHTML = '';
+  }
+});
+
+async function selectFirstConversation(convs) {
+  if (convs.length === 0) {
+    const conv = await window.kbAPI.createConversation('默认对话');
+    convSelector.innerHTML = '';
+    const opt = document.createElement('option');
+    opt.value = conv.id;
+    opt.textContent = conv.name;
+    convSelector.appendChild(opt);
+    currentConvId = conv.id;
+    qaList.innerHTML = '';
+    return;
+  }
+  convSelector.value = convs[0].id;
+  currentConvId = convs[0].id;
+  const conv = await window.kbAPI.getConversation(convs[0].id);
+  loadQAFromMessages(conv.messages);
+}
+
 async function loadQA() {
-  const items = await window.kbAPI.getQA();
+  const convs = await loadConversations();
+  await selectFirstConversation(convs);
+}
+
+function loadQAFromMessages(messages) {
   qaList.innerHTML = '';
-  items.forEach((item) => {
+  messages.forEach((item) => {
     const div = document.createElement('div');
     div.className = 'qa-item';
     let html = `<div class="q">Q: ${escapeHtml(item.q)}</div><div class="a">A: ${escapeHtml(item.a)}</div>`;
@@ -165,12 +240,16 @@ document.getElementById('btn-add-qa').addEventListener('click', async () => {
   const q = qaQuestion.value.trim();
   const a = qaAnswer.value.trim();
   if (!q || !a) return;
+  if (!currentConvId) {
+    alert('请先创建或选择一个对话');
+    return;
+  }
   // 搜索相关文档块作为引用来源
   const citations = await window.kbAPI.searchChunks(q);
-  await window.kbAPI.addQA({ q, a, citations });
+  const messages = await window.kbAPI.addMessage(currentConvId, { q, a, citations });
   qaQuestion.value = '';
   qaAnswer.value = '';
-  loadQA();
+  loadQAFromMessages(messages);
 });
 
 async function loadIndexStats() {

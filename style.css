@@ -48,7 +48,19 @@ button.danger { background: #f38ba8; }
 }
 
 #qa-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-#qa-panel .panel-header { background: #1e1e2e; }
+#qa-panel .panel-header {
+  background: #1e1e2e; flex-wrap: wrap; gap: 8px;
+}
+#conv-toolbar {
+  display: flex; gap: 6px; align-items: center;
+}
+#conv-selector {
+  padding: 4px 8px; border: 1px solid #313244; border-radius: 4px;
+  background: #1e1e2e; color: #cdd6f4; font-size: 12px; outline: none;
+  min-width: 140px; cursor: pointer;
+}
+#conv-selector:focus { border-color: #89b4fa; }
+#conv-selector option { background: #1e1e2e; color: #cdd6f4; }
 #qa-list { flex: 1; overflow-y: auto; padding: 8px 16px; }
 .qa-item {
   background: #313244; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;

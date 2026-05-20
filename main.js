@@ -21,6 +21,7 @@ function ensureDataDir() {
   if (!fs.existsSync(qaFile)) {
     fs.writeFileSync(qaFile, JSON.stringify([], null, 2));
   }
+  ensureConversationsMigration();
   return dataDir;
 }
 
@@ -81,11 +82,88 @@ ipcMain.handle('get-qa', () => {
 });
 
 ipcMain.handle('add-qa', (_event, qa) => {
+  const convs = readConversations();
+  let defaultConv = convs.find(c => c.name === '默认对话');
+  if (!defaultConv) {
+    defaultConv = { id: crypto.randomUUID(), name: '默认对话', createdAt: new Date().toISOString(), messages: [] };
+    convs.unshift(defaultConv);
+  }
+  defaultConv.messages.push(qa);
+  writeConversations(convs);
+  return defaultConv.messages;
+});
+
+// --- 多轮对话历史 (kb-015) ---
+
+const CONVERSATIONS_FILE = 'conversations.json';
+
+function readConversations() {
+  const file = path.join(dataDir, CONVERSATIONS_FILE);
+  if (!fs.existsSync(file)) return [];
+  return JSON.parse(fs.readFileSync(file, 'utf-8'));
+}
+
+function writeConversations(convs) {
+  const file = path.join(dataDir, CONVERSATIONS_FILE);
+  fs.writeFileSync(file, JSON.stringify(convs, null, 2));
+}
+
+function ensureConversationsMigration() {
+  const convFile = path.join(dataDir, CONVERSATIONS_FILE);
   const qaFile = path.join(dataDir, 'qa.json');
-  const items = JSON.parse(fs.readFileSync(qaFile, 'utf-8'));
-  items.push(qa);
-  fs.writeFileSync(qaFile, JSON.stringify(items, null, 2));
-  return items;
+  if (fs.existsSync(convFile)) return;
+  if (!fs.existsSync(qaFile)) return;
+  const qaItems = JSON.parse(fs.readFileSync(qaFile, 'utf-8'));
+  if (!Array.isArray(qaItems) || qaItems.length === 0) return;
+  const defaultConv = {
+    id: crypto.randomUUID(),
+    name: '默认对话',
+    createdAt: new Date().toISOString(),
+    messages: qaItems,
+  };
+  writeConversations([defaultConv]);
+  logger.info('conversations_migration', { migratedCount: qaItems.length });
+}
+
+ipcMain.handle('get-conversations', () => {
+  const convs = readConversations();
+  return convs.map(({ id, name, createdAt }) => ({ id, name, createdAt }));
+});
+
+ipcMain.handle('create-conversation', (_event, name) => {
+  const convs = readConversations();
+  const conv = {
+    id: crypto.randomUUID(),
+    name,
+    createdAt: new Date().toISOString(),
+    messages: [],
+  };
+  convs.push(conv);
+  writeConversations(convs);
+  return conv;
+});
+
+ipcMain.handle('delete-conversation', (_event, id) => {
+  let convs = readConversations();
+  convs = convs.filter(c => c.id !== id);
+  writeConversations(convs);
+  return { success: true };
+});
+
+ipcMain.handle('get-conversation', (_event, id) => {
+  const convs = readConversations();
+  const conv = convs.find(c => c.id === id);
+  if (!conv) throw new Error(`Conversation not found: ${id}`);
+  return conv;
+});
+
+ipcMain.handle('add-message', (_event, { convId, message }) => {
+  const convs = readConversations();
+  const conv = convs.find(c => c.id === convId);
+  if (!conv) throw new Error(`Conversation not found: ${convId}`);
+  conv.messages.push(message);
+  writeConversations(convs);
+  return conv.messages;
 });
 
 ipcMain.handle('import-document', async () => {
