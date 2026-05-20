@@ -86,3 +86,14 @@ button.danger { background: #f38ba8; }
 .citations ul { margin: 4px 0 0 16px; padding: 0; }
 .citations li { margin-bottom: 3px; color: #bac2de; }
 .citations strong { color: #89b4fa; }
+
+#conv-toolbar {
+  display: flex; gap: 4px; align-items: center;
+}
+#conv-selector {
+  padding: 3px 8px; border: 1px solid #313244; border-radius: 4px;
+  background: #1e1e2e; color: #cdd6f4; font-size: 12px; outline: none;
+  max-width: 120px;
+}
+#conv-selector:focus { border-color: #89b4fa; }
+#conv-toolbar button { font-size: 11px; padding: 3px 8px; }

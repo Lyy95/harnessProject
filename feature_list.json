@@ -345,8 +345,24 @@
         "关闭应用重新启动，确认所有对话和历史问答仍然存在。",
         "删除一个对话，确认该对话及其中所有问答被移除。"
       ],
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "main.js: 新增 readConversations()/writeConversations() 读写 conversations.json",
+        "main.js: 新增 5 个 IPC handlers — get-conversations/create-conversation/get-conversation/add-qa-to-conversation/delete-conversation",
+        "main.js: ensureDataDir() 中自动将旧 qa.json 迁移到 conversations.json 默认对话",
+        "main.js: get-conversations 无对话时自动创建默认对话",
+        "preload.js: 暴露 5 个新 API（getConversations/createConversation/getConversation/addQAToConversation/deleteConversation），现共 22 个方法",
+        "index.html: qa-panel 头部新增 conv-toolbar（conv-selector + btn-new-conv + btn-delete-conv）",
+        "renderer.js: 新增 currentConvId 状态 + loadConversations() 填充下拉框",
+        "renderer.js: loadQA() 改为按当前对话加载问答历史",
+        "renderer.js: btn-add-qa 改为 addQAToConversation(currentConvId, ...)",
+        "renderer.js: convSelector.change 切换对话并刷新 QA 列表",
+        "renderer.js: btn-new-conv 创建命名对话并自动切换",
+        "renderer.js: btn-delete-conv 确认后删除对话及所有问答",
+        "style.css: 新增 #conv-toolbar / #conv-selector 样式",
+        "数据验证: 旧 qa.json 5 条问答全部迁移到默认对话",
+        "init.sh 通过，check-architecture.sh 通过（0 违规）"
+      ],
+      "notes": "生成者实现完成，等待评估者评审。"
     }
   ]
 }

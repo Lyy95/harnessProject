@@ -9,9 +9,11 @@ const qaPanel = document.getElementById('qa-panel');
 const qaList = document.getElementById('qa-list');
 const qaQuestion = document.getElementById('qa-question');
 const qaAnswer = document.getElementById('qa-answer');
+const convSelector = document.getElementById('conv-selector');
 
 let currentDoc = null;
 let isEditMode = false;
+let currentConvId = null;
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
@@ -136,10 +138,31 @@ document.getElementById('btn-new-doc').addEventListener('click', async () => {
   loadDocList();
 });
 
+async function loadConversations() {
+  const convs = await window.kbAPI.getConversations();
+  convSelector.innerHTML = '';
+  convs.forEach((conv) => {
+    const opt = document.createElement('option');
+    opt.value = conv.id;
+    opt.textContent = conv.name;
+    if (conv.id === currentConvId) opt.selected = true;
+    convSelector.appendChild(opt);
+  });
+  if (!currentConvId || !convs.find(c => c.id === currentConvId)) {
+    currentConvId = convs[0]?.id || null;
+    if (currentConvId) {
+      convSelector.value = currentConvId;
+    }
+  }
+  return convs;
+}
+
 async function loadQA() {
-  const items = await window.kbAPI.getQA();
+  if (!currentConvId) return;
+  const conv = await window.kbAPI.getConversation(currentConvId);
+  if (!conv) return;
   qaList.innerHTML = '';
-  items.forEach((item) => {
+  conv.qa.forEach((item) => {
     const div = document.createElement('div');
     div.className = 'qa-item';
     let html = `<div class="q">Q: ${escapeHtml(item.q)}</div><div class="a">A: ${escapeHtml(item.a)}</div>`;
@@ -165,9 +188,9 @@ document.getElementById('btn-add-qa').addEventListener('click', async () => {
   const q = qaQuestion.value.trim();
   const a = qaAnswer.value.trim();
   if (!q || !a) return;
-  // 搜索相关文档块作为引用来源
+  if (!currentConvId) return;
   const citations = await window.kbAPI.searchChunks(q);
-  await window.kbAPI.addQA({ q, a, citations });
+  await window.kbAPI.addQAToConversation(currentConvId, { q, a, citations });
   qaQuestion.value = '';
   qaAnswer.value = '';
   loadQA();
@@ -208,7 +231,38 @@ async function ensureAllIndexed() {
   }
 }
 
+// 对话切换
+convSelector.addEventListener('change', () => {
+  currentConvId = convSelector.value;
+  loadQA();
+});
+
+// 新建对话
+document.getElementById('btn-new-conv').addEventListener('click', async () => {
+  const name = prompt('输入对话名称：');
+  if (!name) return;
+  const conv = await window.kbAPI.createConversation(name);
+  currentConvId = conv.id;
+  await loadConversations();
+  loadQA();
+});
+
+// 删除对话
+document.getElementById('btn-delete-conv').addEventListener('click', async () => {
+  if (!currentConvId) return;
+  const conv = await window.kbAPI.getConversation(currentConvId);
+  if (!confirm(`确定删除对话「${conv.name}」及其所有问答？`)) return;
+  await window.kbAPI.deleteConversation(currentConvId);
+  await loadConversations();
+  // 如果所有对话被删，getConversations 会自动创建默认对话
+  if (!currentConvId) {
+    await loadConversations();
+  }
+  loadQA();
+});
+
 await ensureAllIndexed();
+await loadConversations();
 loadDocList();
 loadQA();
 loadIndexStats();

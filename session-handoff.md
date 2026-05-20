@@ -1,54 +1,57 @@
-# Session Handoff — P05 准备阶段
+# Session Handoff — p05-gen-eval 会话 A（生成者）
 
 ## 会话时间
-2026-05-20 (P05 Prep)
+2026-05-20 (P05 生成者)
 
 ## 做了什么
 
-### P05 分支创建与准备
-基于 P04 完成后代码（commit `1e20be4`），创建三个分支用于角色分离实验：
+### kb-015 多轮对话历史 —— 实现
 
-| 分支 | 角色分工 | Harness 文件 |
-|------|---------|-------------|
-| `p05-single` | 单角色（自规划自实现自评） | AGENTS.md |
-| `p05-gen-eval` | 生成者 + 评估者 | AGENTS.md + evaluator-rubric.md + sprint-contract.md |
-| `p05-plan-gen-eval` | 规划者 + 生成者 + 评估者 | AGENTS.md + evaluator-rubric.md + sprint-contract.md |
+**数据层（main.js）**
+- 新增 `readConversations()` / `writeConversations()` 读写 `conversations.json`
+- 数据模型：`[{ id, name, createdAt, qa: [{ q, a, citations }] }]`
+- 新增 5 个 IPC handlers：
+  - `get-conversations` — 获取对话列表（无对话时自动创建默认对话）
+  - `create-conversation` — 创建命名对话
+  - `get-conversation` — 获取单个对话详情
+  - `add-qa-to-conversation` — 向指定对话添加问答
+  - `delete-conversation` — 删除对话及其中所有问答
+- 旧 qa.json 自动迁移：`ensureDataDir()` 中若 conversations.json 不存在，将 qa.json 数据迁移到「默认对话」
 
-### kb-015 多轮对话历史 —— 功能定义
-- 已添加到 `feature_list.json`（status: not_started）
-- 验收标准：创建/切换/删除对话、QA 隔离、持久化
-- 数据模型：`conversations.json` [{ id, name, createdAt, qa: [...] }]
+**桥接层（preload.js）**
+- 暴露 5 个新 API：`getConversations`, `createConversation`, `getConversation`, `addQAToConversation`, `deleteConversation`
+- 当前共 22 个 kbAPI 方法
 
-### 评估量表（evaluator-rubric.md）
-- 11 个评分维度（总分 22）
-- 涵盖：正确性(3)、可靠性(2)、可维护性(2)、用户体验(2)、范围纪律(1)、交接准备度(1)
-- 结论：Accept ≥18 且无 0 分项
+**UI 层（index.html + renderer.js + style.css）**
+- qa-panel 头部新增对话工具栏：下拉选择器 + 新建按钮 + 删除按钮
+- `loadConversations()` — 填充对话下拉框，自动选中当前对话
+- `loadQA()` — 按 `currentConvId` 加载对应对话的问答历史
+- `btn-add-qa` — 问答添加到当前活跃对话
+- `convSelector.change` — 切换对话并刷新 QA 列表
+- `btn-new-conv` — prompt 输入名称，创建后自动切换
+- `btn-delete-conv` — 确认后删除对话，自动切换到剩余对话
+- `currentConvId` 状态管理（删除对话后自动回退到第一个可用对话）
 
-### Sprint Contract（sprint-contract.md）
-- 明确 Done 定义（11 条验收项）
-- 明确不在范围内（6 项）
-- 数据模型和 IPC 通道建议
-- 旧 qa.json 迁移策略
+## 待评估
 
-## 实验流程
+| ID | 功能 | 状态 |
+|----|------|------|
+| kb-015 | 多轮对话历史 | 实现完成，等待评估者 |
 
-所有三个分支做同一个功能升级（多轮对话历史），唯一变量是角色分工：
+## 架构检查
 
-1. **p05-single**：一个 agent 包揽规划、实现、自查（弱 harness）
-2. **p05-gen-eval**：生成者实现 → 评估者打分 → 修订循环（强 harness）
-3. **p05-plan-gen-eval**：规划者拆解 → 生成者实现 → 评估者打分 → 修订循环（更强 harness）
+- `bash scripts/check-architecture.sh` — 通过（0 违规）
+- `./init.sh` — 通过
 
-## 要收集的数据
+## 项目当前规模
 
-- 评估量表评分（各维度 + 总分）
-- 缺陷检出数量
-- 返工轮数和内容
-- 评估者调优轮数
-- 最终功能健壮性
+- 主进程 IPC handlers：20 个（+5 conversation）
+- preload.js kbAPI 方法：22 个（+5 conversation）
+- 数据文件：conversations.json（新增）
 
-## 当前分支
+## 下一步
 
-当前在 `p05-plan-gen-eval`。三个分支均已提交准备内容。
+切换到会话 B（评估者），用 `evaluator-rubric.md` 独立评审 kb-015 实现。
 
 ## 启动命令
 

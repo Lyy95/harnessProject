@@ -21,6 +21,21 @@ function ensureDataDir() {
   if (!fs.existsSync(qaFile)) {
     fs.writeFileSync(qaFile, JSON.stringify([], null, 2));
   }
+  // kb-015: 迁移旧 qa.json 到 conversations.json
+  const convFile = path.join(dataDir, 'conversations.json');
+  if (!fs.existsSync(convFile)) {
+    let legacyQA = [];
+    if (fs.existsSync(qaFile)) {
+      try { legacyQA = JSON.parse(fs.readFileSync(qaFile, 'utf-8')); } catch (_) {}
+    }
+    const defaultConv = [{
+      id: crypto.randomUUID(),
+      name: '默认对话',
+      createdAt: new Date().toISOString(),
+      qa: legacyQA,
+    }];
+    fs.writeFileSync(convFile, JSON.stringify(defaultConv, null, 2));
+  }
   return dataDir;
 }
 
@@ -336,4 +351,70 @@ ipcMain.handle('search-chunks', (_event, query) => {
     chunkId: chunk.id,
     score,
   }));
+});
+
+// --- 多轮对话历史 (kb-015) ---
+
+function readConversations() {
+  const convFile = path.join(dataDir, 'conversations.json');
+  if (!fs.existsSync(convFile)) return [];
+  return JSON.parse(fs.readFileSync(convFile, 'utf-8'));
+}
+
+function writeConversations(convs) {
+  const convFile = path.join(dataDir, 'conversations.json');
+  fs.writeFileSync(convFile, JSON.stringify(convs, null, 2));
+}
+
+ipcMain.handle('get-conversations', () => {
+  const convs = readConversations();
+  if (convs.length === 0) {
+    // 无对话时自动创建默认对话
+    const def = {
+      id: crypto.randomUUID(),
+      name: '默认对话',
+      createdAt: new Date().toISOString(),
+      qa: [],
+    };
+    writeConversations([def]);
+    return [def];
+  }
+  return convs;
+});
+
+ipcMain.handle('create-conversation', (_event, name) => {
+  const convs = readConversations();
+  const conv = {
+    id: crypto.randomUUID(),
+    name: name || '新对话',
+    createdAt: new Date().toISOString(),
+    qa: [],
+  };
+  convs.push(conv);
+  writeConversations(convs);
+  logger.info('create_conversation', { id: conv.id, name: conv.name });
+  return conv;
+});
+
+ipcMain.handle('get-conversation', (_event, convId) => {
+  return readConversations().find(c => c.id === convId) || null;
+});
+
+ipcMain.handle('add-qa-to-conversation', (_event, { convId, qa }) => {
+  const convs = readConversations();
+  const conv = convs.find(c => c.id === convId);
+  if (!conv) return null;
+  conv.qa.push(qa);
+  writeConversations(convs);
+  return conv;
+});
+
+ipcMain.handle('delete-conversation', (_event, convId) => {
+  const convs = readConversations();
+  const idx = convs.findIndex(c => c.id === convId);
+  if (idx === -1) return { success: false };
+  const deleted = convs.splice(idx, 1)[0];
+  writeConversations(convs);
+  logger.info('delete_conversation', { id: deleted.id, name: deleted.name });
+  return { success: true };
 });

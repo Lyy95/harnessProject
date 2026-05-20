@@ -42,7 +42,14 @@
         <textarea id="doc-content" class="hidden"></textarea>
       </div>
       <div id="qa-panel">
-        <div class="panel-header"><h2>问答面板</h2></div>
+        <div class="panel-header">
+          <h2>问答面板</h2>
+          <div id="conv-toolbar">
+            <select id="conv-selector"></select>
+            <button id="btn-new-conv">+ 新对话</button>
+            <button id="btn-delete-conv" class="danger">删除对话</button>
+          </div>
+        </div>
         <div id="qa-list"></div>
         <div id="qa-input-area">
           <input id="qa-question" placeholder="输入问题..." />
