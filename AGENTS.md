@@ -63,6 +63,28 @@
 - 证据记录在 `feature_list.json` 或 `claude-progress.md`
 - `./init.sh` 能正常运行
 
+## P05 生成者-评估者工作流
+
+本分支使用双角色分工：
+
+### 会话 A — 生成者（你）
+1. 读取 `sprint-contract.md` 对齐范围和验收标准。
+2. 读取 `feature_list.json` 找到 kb-015。
+3. 实现多轮对话历史功能。
+4. 记录实现证据到 `feature_list.json`。
+5. 更新 `session-handoff.md`。
+6. 提交代码。**不要标记功能为完成**，等待评估者评审。
+
+### 会话 B — 评估者
+1. 用 `evaluator-rubric.md` 独立评分。
+2. 记录发现的问题和建议修复。
+3. 更新 `evaluator-rubric.md` 中的评分和修订记录。
+
+### 修订循环
+1. 生成者根据评估者反馈修复问题。
+2. 评估者重新评分。
+3. 至少完成一轮修订后，评估者给出 Accept/Block 结论。
+
 ## 收尾
 
 结束会话前：
