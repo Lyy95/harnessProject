@@ -1,6 +1,6 @@
 {
   "project": "Electron 知识库应用",
-  "last_updated": "2026-05-20-p04-session",
+  "last_updated": "2026-05-20-p05-prep",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -330,6 +330,23 @@
         "init.sh 通过，check-architecture.sh 通过（0 违规）"
       ],
       "notes": "P04 修复 kb-013 后暴露的连锁问题——ensureAllIndexed 引入的顶层 await 在非模块脚本中不可用。"
+    },
+    {
+      "id": "kb-015",
+      "priority": 15,
+      "area": "qa",
+      "title": "多轮对话历史——创建、切换、查看对话线程",
+      "user_visible_behavior": "用户可以在问答面板创建多个对话线程，每个线程包含独立的问答历史，可在不同对话间切换，对话数据持久化存储。",
+      "status": "not_started",
+      "verification": [
+        "创建新对话，输入名称，确认对话列表中显示新对话。",
+        "在多轮对话中依次提问多个问题，确认所有问答按顺序保存在当前对话中。",
+        "切换到另一个对话，确认问答历史正确切换。",
+        "关闭应用重新启动，确认所有对话和历史问答仍然存在。",
+        "删除一个对话，确认该对话及其中所有问答被移除。"
+      ],
+      "evidence": [],
+      "notes": ""
     }
   ]
 }

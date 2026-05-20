@@ -63,6 +63,39 @@
 - 证据记录在 `feature_list.json` 或 `claude-progress.md`
 - `./init.sh` 能正常运行
 
+## P05 规划者-生成者-评估者工作流
+
+本分支使用三角色分工：先规划、再实现、再评审。
+
+### 会话 A 前半部分 — 规划者
+1. 读取 `sprint-contract.md` 了解目标范围。
+2. 读取现有 QA 面板代码（main.js, preload.js, renderer.js, index.html）。
+3. 输出 `sprint-plan.md`，包含：
+   - 需要修改/新增的文件清单
+   - IPC handler 设计（通道名、参数、返回值）
+   - 数据模型设计（conversations.json 结构）
+   - UI 布局变更草图
+   - 实施步骤和依赖关系（先做数据层，再做 IPC，最后 UI）
+   - 潜在风险和边缘情况
+4. 提交 `sprint-plan.md` 到仓库。
+
+### 会话 A 后半部分 — 生成者
+1. 读取 `sprint-plan.md` 按步骤实现。
+2. 记录实现证据到 `feature_list.json`。
+3. 更新 `session-handoff.md`。
+4. 提交代码。**不要标记功能为完成**，等待评估者评审。
+
+### 会话 B — 评估者
+1. 用 `evaluator-rubric.md` 独立评分。
+2. 对照 `sprint-plan.md` 检查实现是否与规划一致。
+3. 记录发现的问题和建议修复。
+4. 更新 `evaluator-rubric.md` 中的评分和修订记录。
+
+### 修订循环
+1. 生成者根据评估者反馈修复问题。
+2. 评估者重新评分。
+3. 至少完成一轮修订后，评估者给出 Accept/Block 结论。
+
 ## 收尾
 
 结束会话前：
