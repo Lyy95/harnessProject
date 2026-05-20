@@ -259,6 +259,56 @@
         "init.sh 通过，Electron v42.1.0 可执行"
       ],
       "notes": ""
+    },
+    {
+      "id": "kb-012",
+      "priority": 12,
+      "area": "logging",
+      "title": "结构化日志——启动/导入/索引/QA失败路径日志",
+      "user_visible_behavior": "应用关键操作（启动、导入、索引、问答搜索）自动记录结构化日志到 kb.log。",
+      "status": "passing",
+      "verification": [
+        "启动应用，确认 kb.log 文件中新增启动日志。",
+        "导入文档后，确认日志记录导入事件及文件名。",
+        "编辑保存文档后，确认日志记录分块和元数据提取。",
+        "在问答面板提问无匹配关键词，确认日志记录搜索失败。"
+      ],
+      "evidence": [
+        "services/logger.js: 新建日志模块（纯逻辑层，不依赖 electron）",
+        "createLogger(dataDir) 支持 INFO/WARN/ERROR/DEBUG 级别",
+        "JSON 行格式 + 500KB 自动轮转",
+        "main.js: app 启动时初始化 logger，记录 app_start",
+        "main.js: import-document 记录每条导入（文件名+大小）",
+        "main.js: log-import 记录导入批次（文件数+名称列表）",
+        "main.js: chunk-document 记录分块（文档名+字符数+块数）",
+        "main.js: extract-metadata 记录元数据提取（文档名+字数+段落数）",
+        "main.js: search-chunks 记录搜索（成功返回结果数 / 失败记录关键词+总块数）",
+        "logger 验证：3 条日志正确写入 kb.log（INFO/WARN/ERROR）",
+        "init.sh 通过，check-architecture.sh 通过（0 违规）",
+        "Electron v42.1.0 可执行"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-013",
+      "priority": 13,
+      "area": "bugfix",
+      "title": "修复分块读取 bug——恢复问答引用功能",
+      "user_visible_behavior": "智能问答功能恢复正常，提问后自动附带文档片段引用。",
+      "status": "passing",
+      "verification": [
+        "导入包含关键词的文档。",
+        "在问答面板提问，确认回答中包含文档片段引用。",
+        "确认引用的片段实际存在于被引用的文档中。"
+      ],
+      "evidence": [
+        "根因: readChunks() 错误使用 c.contentLength（不存在的字段）替代 c.content，导致 content 始终为空",
+        "修复: 直接 return JSON.parse(fs.readFileSync(...)) 原样返回存储数据",
+        "影响面: search-chunks + get-document-chunks + ensureAllIndexed 全部恢复",
+        "验证: 修复后搜索 Electron + runtime → 2 条正确匹配",
+        "init.sh 通过，check-architecture.sh 通过（0 违规）"
+      ],
+      "notes": "p04-improved prep 中故意埋入的 bug，模拟真实生产回归。"
     }
   ]
 }

@@ -2,8 +2,10 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { createLogger } = require('./services/logger');
 
 let dataDir = path.join(app.getPath('userData'), 'kb-data');
+let logger;
 
 function ensureDataDir() {
   if (!fs.existsSync(dataDir)) {
@@ -38,6 +40,8 @@ function createWindow() {
 
 app.whenReady().then(() => {
   ensureDataDir();
+  logger = createLogger(dataDir);
+  logger.info('app_start', { dataDir, electronVersion: process.versions.electron });
   createWindow();
 
   app.on('activate', () => {
@@ -98,8 +102,10 @@ ipcMain.handle('import-document', async () => {
   for (const filePath of result.filePaths) {
     const name = path.basename(filePath);
     const destPath = path.join(docsDir, name);
+    const srcSize = fs.statSync(filePath).size;
     fs.copyFileSync(filePath, destPath);
     imported.push({ name, path: destPath });
+    logger.info('import_document', { name, size: srcSize });
   }
   return imported;
 });
@@ -126,6 +132,7 @@ ipcMain.handle('log-import', (_event, files) => {
   }
   imports.push(record);
   fs.writeFileSync(importsFile, JSON.stringify(imports, null, 2));
+  logger.info('log_import', { fileCount: files.length, names: record.files });
   return imports;
 });
 
@@ -191,9 +198,7 @@ function chunkText(text, docName) {
 function readChunks() {
   const chunksFile = path.join(dataDir, 'chunks.json');
   if (!fs.existsSync(chunksFile)) return [];
-  const raw = JSON.parse(fs.readFileSync(chunksFile, 'utf-8'));
-  // 读取时 content 字段未正确还原
-  return raw.map(c => ({ ...c, content: c.contentLength || '' }));
+  return JSON.parse(fs.readFileSync(chunksFile, 'utf-8'));
 }
 
 function writeChunks(chunks) {
@@ -203,10 +208,10 @@ function writeChunks(chunks) {
 
 ipcMain.handle('chunk-document', (_event, { name, content }) => {
   const allChunks = readChunks();
-  // 移除该文档的旧分块，写入新分块
   const filtered = allChunks.filter(c => c.docName !== name);
   const newChunks = chunkText(content, name);
   writeChunks([...filtered, ...newChunks]);
+  logger.info('chunk_document', { docName: name, charCount: content.length, chunks: newChunks.length });
   return newChunks;
 });
 
@@ -253,6 +258,7 @@ ipcMain.handle('extract-metadata', (_event, { name, content }) => {
   const allMeta = readMeta();
   const filtered = allMeta.filter(m => m.docName !== name);
   writeMeta([...filtered, entry]);
+  logger.info('extract_metadata', { docName: name, wordCount: entry.wordCount, paragraphCount: entry.paragraphCount });
   return entry;
 });
 
@@ -281,7 +287,10 @@ ipcMain.handle('get-index-stats', () => {
 
 ipcMain.handle('search-chunks', (_event, query) => {
   const chunks = readChunks();
-  if (chunks.length === 0) return [];
+  if (chunks.length === 0) {
+    logger.warn('search_chunks_no_data', { query, totalChunks: 0 });
+    return [];
+  }
 
   // 拆分关键词：按空白字符 + 中文逐字双字符组合
   const keywords = [];
@@ -313,6 +322,12 @@ ipcMain.handle('search-chunks', (_event, query) => {
     .filter(s => s.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
+
+  if (matches.length === 0) {
+    logger.warn('search_chunks_no_match', { query, keywords, totalChunks: chunks.length });
+  } else {
+    logger.info('search_chunks_ok', { query, results: matches.length });
+  }
 
   // 生成引用：取每块前 120 字符作为片段
   return matches.map(({ chunk, score }) => ({
