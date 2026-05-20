@@ -4,6 +4,8 @@
 
 ## 项目概览
 
+详细架构见 `ARCHITECTURE.md`，产品范围见 `PRODUCT.md`。
+
 - **技术栈**：Node.js + Electron
 - **启动命令**：`npm start`（即 `electron .`）
 - **主进程**：`main.js` — 窗口创建、本地数据目录、IPC 处理
@@ -54,6 +56,16 @@
 
 1. 更新 `claude-progress.md`
 2. 更新 `feature_list.json`
-3. 记录仍未解决的风险或 blocker
-4. 在工作处于安全状态后，用清晰的提交信息提交
-5. 保证下一轮会话可以直接运行 `./init.sh`
+3. **更新 `session-handoff.md`**：记录做了什么、没做什么、下一步是什么。这是下一轮会话接手的关键文件。
+4. 记录仍未解决的风险或 blocker
+5. 在工作处于安全状态后，用清晰的提交信息提交
+6. 保证下一轮会话可以直接运行 `./init.sh`
+
+## 会话接手
+
+新会话开始时，按以下顺序恢复上下文：
+1. 读 `session-handoff.md` 了解上次进度
+2. 读 `feature_list.json` 了解功能状态
+3. 读 `ARCHITECTURE.md` 了解项目结构
+4. 读 `claude-progress.md` 了解历史
+5. 运行 `./init.sh` 恢复可运行状态

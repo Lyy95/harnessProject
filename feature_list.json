@@ -1,6 +1,6 @@
 {
   "project": "Electron 知识库应用",
-  "last_updated": "2026-05-19T18:10",
+  "last_updated": "2026-05-20",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -92,6 +92,52 @@
         "文档和问答通过 fs.writeFileSync 持久化到磁盘"
       ],
       "notes": ""
+    },
+    {
+      "id": "kb-005",
+      "priority": 5,
+      "area": "documents",
+      "title": "文档导入——从本地文件系统导入文档",
+      "user_visible_behavior": "用户点击「导入」按钮，选择本地文件，文件被复制到知识库文档目录并在列表中显示。",
+      "status": "not_started",
+      "verification": [
+        "点击导入按钮，确认弹出文件选择对话框。",
+        "选择一个或多个文件，确认文件出现在文档列表中。",
+        "打开导入的文件，确认内容完整。"
+      ],
+      "evidence": [],
+      "notes": "需要 dialog.showOpenDialog + fs.copyFileSync"
+    },
+    {
+      "id": "kb-006",
+      "priority": 6,
+      "area": "documents",
+      "title": "文档详情页——元数据展示 + 查看/编辑切换",
+      "user_visible_behavior": "用户点击文档后，看到文档详情页，包含文件大小和修改时间，默认查看模式，可切换到编辑模式。",
+      "status": "not_started",
+      "verification": [
+        "点击文档名，确认右侧显示详情视图。",
+        "确认显示文件大小和修改时间。",
+        "默认查看模式，点击「编辑」切换到编辑模式。",
+        "编辑后保存，切回查看模式，确认元数据已更新。"
+      ],
+      "evidence": [],
+      "notes": "需要 get-document-info IPC handler + 查看/编辑模式切换"
+    },
+    {
+      "id": "kb-007",
+      "priority": 7,
+      "area": "data",
+      "title": "导入持久化——记录导入历史到 imports.json",
+      "user_visible_behavior": "每次导入操作自动记录到 imports.json，包含导入时间和文件列表。",
+      "status": "not_started",
+      "verification": [
+        "导入一个文件。",
+        "确认 imports.json 文件中新增一条记录，包含时间和文件名。",
+        "重启应用后，导入记录仍然存在。"
+      ],
+      "evidence": [],
+      "notes": "需要 log-import + get-imports IPC handlers"
     }
   ]
 }
