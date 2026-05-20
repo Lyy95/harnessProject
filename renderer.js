@@ -53,6 +53,14 @@ document.getElementById('btn-delete-doc').addEventListener('click', async () => 
   loadDocList();
 });
 
+document.getElementById('btn-import-doc').addEventListener('click', async () => {
+  const imported = await window.kbAPI.importDocument();
+  if (imported.length > 0) {
+    alert(`已导入 ${imported.length} 个文件`);
+    loadDocList();
+  }
+});
+
 document.getElementById('btn-new-doc').addEventListener('click', async () => {
   const name = prompt('输入文档名称（含扩展名，如 note.txt）：');
   if (!name) return;

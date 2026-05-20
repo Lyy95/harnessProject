@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('kbAPI', {
   deleteDocument: (name) => ipcRenderer.invoke('delete-document', name),
   getQA: () => ipcRenderer.invoke('get-qa'),
   addQA: (qa) => ipcRenderer.invoke('add-qa', qa),
+  importDocument: () => ipcRenderer.invoke('import-document'),
   getDataDir: () => ipcRenderer.invoke('get-data-dir'),
 });
