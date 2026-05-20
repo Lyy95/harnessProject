@@ -24,12 +24,18 @@
 - **影响**：`search-chunks`、`get-document-chunks`、`ensureAllIndexed` 全部恢复
 - **验证**：修复后查询 "Electron runtime" → 2 条正确匹配
 
+### kb-014 修复顶层 await 导致所有按钮失效
+- **根因**：`renderer.js` 末尾使用了 `await ensureAllIndexed()`（顶层 await），但 `index.html` 以普通 `<script>` 加载（不是 `type="module"`），导致 JS 解析失败，整个脚本不执行，所有按钮事件监听器未注册
+- **修复**：`index.html` 中 `<script src="renderer.js">` → `<script type="module" src="renderer.js">`
+- **验证**：`ensureAllIndexed()` 正常执行，`chunks.json` + `document-meta.json` 正确生成，日志链路完整
+
 ## P04 完成状态
 
 | ID | 功能 | 状态 |
 |----|------|------|
 | kb-012 | 结构化日志 | passing |
 | kb-013 | 修复分块读取 bug | passing |
+| kb-014 | 修复顶层 await 按钮失效 | passing |
 
 ## 架构变更
 

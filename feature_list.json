@@ -1,6 +1,6 @@
 {
   "project": "Electron 知识库应用",
-  "last_updated": "2026-05-20-p03-prep",
+  "last_updated": "2026-05-20-p04-session",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -309,6 +309,27 @@
         "init.sh 通过，check-architecture.sh 通过（0 违规）"
       ],
       "notes": "p04-improved prep 中故意埋入的 bug，模拟真实生产回归。"
+    },
+    {
+      "id": "kb-014",
+      "priority": 14,
+      "area": "bugfix",
+      "title": "修复顶层 await 导致所有按钮失效",
+      "user_visible_behavior": "应用所有按钮（新建、导入、添加问答、保存、删除）恢复正常功能。",
+      "status": "passing",
+      "verification": [
+        "点击新建按钮，确认弹出文档名输入框。",
+        "点击导入按钮，确认弹出文件选择对话框。",
+        "在问答面板输入问答并点击添加，确认问答出现在列表中。"
+      ],
+      "evidence": [
+        "根因: renderer.js 使用顶层 await ensureAllIndexed()，但 index.html 以普通 <script>（非 type=module）加载，导致 JS 解析失败",
+        "修复: index.html <script src=\"renderer.js\"> → <script type=\"module\" src=\"renderer.js\">",
+        "验证: ensureAllIndexed() 正常执行，chunks.json + document-meta.json 正确生成",
+        "验证: 日志链路完整（app_start → chunk_document → extract_metadata）",
+        "init.sh 通过，check-architecture.sh 通过（0 违规）"
+      ],
+      "notes": "P04 修复 kb-013 后暴露的连锁问题——ensureAllIndexed 引入的顶层 await 在非模块脚本中不可用。"
     }
   ]
 }
