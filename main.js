@@ -104,3 +104,11 @@ ipcMain.handle('import-document', async () => {
 });
 
 ipcMain.handle('get-data-dir', () => dataDir);
+
+ipcMain.handle('get-document-info', (_event, filePath) => {
+  const stats = fs.statSync(filePath);
+  return {
+    size: stats.size,
+    mtime: stats.mtime.toISOString(),
+  };
+});

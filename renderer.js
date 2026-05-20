@@ -2,12 +2,47 @@ const docList = document.getElementById('doc-list');
 const docViewer = document.getElementById('doc-viewer');
 const docTitle = document.getElementById('doc-title');
 const docContent = document.getElementById('doc-content');
+const docMeta = document.getElementById('doc-meta');
+const docViewContent = document.getElementById('doc-view-content');
+const btnToggleMode = document.getElementById('btn-toggle-mode');
 const qaPanel = document.getElementById('qa-panel');
 const qaList = document.getElementById('qa-list');
 const qaQuestion = document.getElementById('qa-question');
 const qaAnswer = document.getElementById('qa-answer');
 
 let currentDoc = null;
+let isEditMode = false;
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function formatMtime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('zh-CN');
+}
+
+function updateMeta(info) {
+  docMeta.textContent = `大小: ${formatFileSize(info.size)} | 修改时间: ${formatMtime(info.mtime)}`;
+}
+
+function enterViewMode(text) {
+  isEditMode = false;
+  docViewContent.textContent = text;
+  docViewContent.classList.remove('hidden');
+  docContent.classList.add('hidden');
+  btnToggleMode.textContent = '编辑';
+}
+
+function enterEditMode() {
+  isEditMode = true;
+  docContent.value = docViewContent.textContent;
+  docContent.classList.remove('hidden');
+  docViewContent.classList.add('hidden');
+  btnToggleMode.textContent = '查看';
+}
 
 async function loadDocList() {
   const docs = await window.kbAPI.getDocuments();
@@ -26,9 +61,20 @@ async function openDoc(doc) {
   docViewer.classList.remove('hidden');
   qaPanel.style.display = 'none';
   docTitle.textContent = doc.name;
-  docContent.value = await window.kbAPI.readDocument(doc.path);
+  const text = await window.kbAPI.readDocument(doc.path);
+  const info = await window.kbAPI.getDocumentInfo(doc.path);
+  updateMeta(info);
+  enterViewMode(text);
   loadDocList();
 }
+
+btnToggleMode.addEventListener('click', () => {
+  if (isEditMode) {
+    enterViewMode(docContent.value);
+  } else {
+    enterEditMode();
+  }
+});
 
 document.getElementById('btn-close-doc').addEventListener('click', () => {
   currentDoc = null;
@@ -39,7 +85,11 @@ document.getElementById('btn-close-doc').addEventListener('click', () => {
 
 document.getElementById('btn-save-doc').addEventListener('click', async () => {
   if (!currentDoc) return;
-  await window.kbAPI.saveDocument({ name: currentDoc.name, content: docContent.value });
+  const content = isEditMode ? docContent.value : docViewContent.textContent;
+  await window.kbAPI.saveDocument({ name: currentDoc.name, content });
+  const info = await window.kbAPI.getDocumentInfo(currentDoc.path);
+  updateMeta(info);
+  enterViewMode(content);
   alert('已保存');
 });
 
