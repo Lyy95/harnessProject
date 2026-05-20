@@ -13,12 +13,25 @@
 - **渲染进程**：`index.html` + `style.css` + `renderer.js`
 - **数据目录**：`app.getPath('userData')/kb-data/`
 
-## Electron 边界规则
+## Electron 四层边界（不可违反）
 
-- 主进程和渲染进程隔离，必须通过 preload.js 的 contextBridge 通信
-- 不要在渲染进程中使用 `require('electron')` 或 Node.js API
-- 所有文件系统操作必须在主进程中通过 IPC handler 完成
-- 窗口 webPreferences：`contextIsolation: true, nodeIntegration: false`
+```
+┌── renderer.js ──────┐  ← 只能通过 window.kbAPI 访问后端
+│  index.html         │    禁止: require('electron')、Node.js API
+├── preload.js ───────┤  ← 只能用 contextBridge + ipcRenderer
+│                     │    禁止: 暴露 Node API 直接给 renderer
+├── main.js ──────────┤  ← 主进程，可用 Node.js + Electron API
+│  IPC handlers       │    禁止: 直接操作 DOM
+├── services/ ────────┤  ← 纯逻辑模块（如 logger、索引引擎）
+│                     │    禁止: 依赖 electron 包
+└─────────────────────┘
+```
+
+- **renderer.js** 中不得出现 `require('electron')`、`require('fs')`、`require('path')`
+- **preload.js** 只能使用 contextBridge 和 ipcRenderer，不得暴露 `require` 给渲染进程
+- **main.js** `webPreferences` 必须：`contextIsolation: true, nodeIntegration: false`
+- 修改代码后运行 `bash scripts/check-architecture.sh` 确认无违规
+- 违规检查脚本失败时，必须先修复违规再继续
 
 ## 开工流程
 
