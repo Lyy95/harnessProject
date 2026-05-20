@@ -1,6 +1,6 @@
 {
   "project": "Electron 知识库应用",
-  "last_updated": "2026-05-20",
+  "last_updated": "2026-05-20-p03-prep",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -158,6 +158,67 @@
         "init.sh 通过，Electron v42.1.0 可执行"
       ],
       "notes": ""
+    },
+    {
+      "id": "kb-008",
+      "priority": 8,
+      "area": "indexing",
+      "title": "文档分块——将文档按段落拆分成索引块",
+      "user_visible_behavior": "文档内容自动按段落或固定大小拆分成块，用于后续索引和检索。",
+      "status": "not_started",
+      "verification": [
+        "导入一个多段落文档。",
+        "确认文档被拆分成多个块，每个块有唯一 ID。",
+        "确认块数据持久化存储。"
+      ],
+      "evidence": [],
+      "notes": "需要分块算法 + chunk storage。块大小建议 500-1000 字符。"
+    },
+    {
+      "id": "kb-009",
+      "priority": 9,
+      "area": "indexing",
+      "title": "元数据提取——自动提取文档元数据",
+      "user_visible_behavior": "导入或保存文档时自动提取字数、段落数、创建时间等元数据。",
+      "status": "not_started",
+      "verification": [
+        "导入一个文档。",
+        "确认文档元数据包含：字数、段落数、文件大小、创建/修改时间。",
+        "确认元数据持久化存储。"
+      ],
+      "evidence": [],
+      "notes": "元数据存储到 document-meta.json 或扩展 imports.json。"
+    },
+    {
+      "id": "kb-010",
+      "priority": 10,
+      "area": "ui",
+      "title": "索引进度 UI——显示索引进度状态",
+      "user_visible_behavior": "在界面上显示文档索引状态（已索引文档数、总块数、索引进度）。",
+      "status": "not_started",
+      "verification": [
+        "导入文档后，确认索引进度 UI 显示更新。",
+        "确认进度显示正确的已索引文档数和总块数。",
+        "索引完成后确认状态显示为完成。"
+      ],
+      "evidence": [],
+      "notes": "可在左侧面板底部或右侧顶部添加索引进度栏。"
+    },
+    {
+      "id": "kb-011",
+      "priority": 11,
+      "area": "qa",
+      "title": "带引用的问答——回答时引用原始文档片段",
+      "user_visible_behavior": "用户在问答面板提问后，回答自动附上相关文档片段的引用来源。",
+      "status": "not_started",
+      "verification": [
+        "导入包含关键词的文档。",
+        "在问答面板提问，确认回答中包含对文档片段的引用。",
+        "确认引用的片段确实存在于被引用的文档中。",
+        "确认引用标注了来源文档名。"
+      ],
+      "evidence": [],
+      "notes": "基于文档分块(chunks)进行关键词匹配，返回相关块作为引用。"
     }
   ]
 }
