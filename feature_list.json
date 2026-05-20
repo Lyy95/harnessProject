@@ -165,14 +165,24 @@
       "area": "indexing",
       "title": "文档分块——将文档按段落拆分成索引块",
       "user_visible_behavior": "文档内容自动按段落或固定大小拆分成块，用于后续索引和检索。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "导入一个多段落文档。",
         "确认文档被拆分成多个块，每个块有唯一 ID。",
         "确认块数据持久化存储。"
       ],
-      "evidence": [],
-      "notes": "需要分块算法 + chunk storage。块大小建议 500-1000 字符。"
+      "evidence": [
+        "main.js: 新增 chunkText() 分块算法（按段落+换行+固定大小三级拆分，500-1000 字符/块）",
+        "main.js: 新增 chunk-document + get-document-chunks IPC handlers",
+        "main.js: 新增 readChunks()/writeChunks() 读写 chunks.json 持久化",
+        "preload.js: 暴露 chunkDocument() 和 getDocumentChunks() API",
+        "renderer.js: 保存文档后自动调用 chunkDocument()",
+        "renderer.js: 导入文档后自动对每个文件调用 chunkDocument()",
+        "每个块使用 crypto.randomUUID() 分配唯一 ID，含 docName + index + content 字段",
+        "分块算法验证：3430 字符文档 → 4 块（856 字符/块），全部通过唯一性+范围检查",
+        "init.sh 通过，Electron v42.1.0 可执行"
+      ],
+      "notes": ""
     },
     {
       "id": "kb-009",
@@ -180,14 +190,24 @@
       "area": "indexing",
       "title": "元数据提取——自动提取文档元数据",
       "user_visible_behavior": "导入或保存文档时自动提取字数、段落数、创建时间等元数据。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "导入一个文档。",
         "确认文档元数据包含：字数、段落数、文件大小、创建/修改时间。",
         "确认元数据持久化存储。"
       ],
-      "evidence": [],
-      "notes": "元数据存储到 document-meta.json 或扩展 imports.json。"
+      "evidence": [
+        "main.js: 新增 extract-metadata IPC handler，提取 charCount/wordCount/paragraphCount/fileSize/createdAt/modifiedAt",
+        "main.js: 新增 get-document-metadata IPC handler，按文档名查询元数据",
+        "main.js: 新增 readMeta()/writeMeta() 读写 document-meta.json 持久化",
+        "preload.js: 暴露 extractMetadata() 和 getDocumentMetadata() API（现共 15 个方法）",
+        "renderer.js: 保存文档后自动调用 extractMetadata()",
+        "renderer.js: 导入文档后自动对每个文件调用 extractMetadata()",
+        "renderer.js: updateMeta() 展示字数 + 段落数；openDoc() 读取元数据并合并显示",
+        "元数据提取验证：4 段落文档 → charCount=100, wordCount=6, paragraphCount=4 全部正确",
+        "init.sh 通过，Electron v42.1.0 可执行"
+      ],
+      "notes": ""
     },
     {
       "id": "kb-010",
@@ -195,14 +215,24 @@
       "area": "ui",
       "title": "索引进度 UI——显示索引进度状态",
       "user_visible_behavior": "在界面上显示文档索引状态（已索引文档数、总块数、索引进度）。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "导入文档后，确认索引进度 UI 显示更新。",
         "确认进度显示正确的已索引文档数和总块数。",
         "索引完成后确认状态显示为完成。"
       ],
-      "evidence": [],
-      "notes": "可在左侧面板底部或右侧顶部添加索引进度栏。"
+      "evidence": [
+        "main.js: 新增 get-index-stats IPC handler，返回 totalDocs/indexedDocs/chunkedDocs/totalChunks",
+        "preload.js: 暴露 getIndexStats() API（现共 16 个方法）",
+        "index.html: 左侧面板底部新增 #index-status 索引进度区域",
+        "style.css: 新增 #index-status 样式（深色主题一致）",
+        "renderer.js: 新增 loadIndexStats() 函数，三态显示（就绪/百分比/完成）",
+        "renderer.js: 启动时调用 loadIndexStats() 初始化",
+        "renderer.js: 保存/导入后自动调用 loadIndexStats() 刷新进度",
+        "状态颜色编码：就绪=灰色、进行中=黄色、完成=绿色",
+        "init.sh 通过，Electron v42.1.0 可执行"
+      ],
+      "notes": ""
     },
     {
       "id": "kb-011",
@@ -210,15 +240,25 @@
       "area": "qa",
       "title": "带引用的问答——回答时引用原始文档片段",
       "user_visible_behavior": "用户在问答面板提问后，回答自动附上相关文档片段的引用来源。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "导入包含关键词的文档。",
         "在问答面板提问，确认回答中包含对文档片段的引用。",
         "确认引用的片段确实存在于被引用的文档中。",
         "确认引用标注了来源文档名。"
       ],
-      "evidence": [],
-      "notes": "基于文档分块(chunks)进行关键词匹配，返回相关块作为引用。"
+      "evidence": [
+        "main.js: 新增 search-chunks IPC handler，关键词匹配搜索 chunks",
+        "搜索算法：英文单词匹配 + 中文双字符组合匹配，取前 5 条按分数降序",
+        "preload.js: 暴露 searchChunks() API（现共 17 个方法）",
+        "renderer.js: btn-add-qa 添加问答时自动调用 searchChunks()，citations 存入 qa.json",
+        "renderer.js: loadQA() 渲染引用来源列表，含来源文档名 + 前 120 字符片段",
+        "style.css: 新增 .citations 引用来源样式",
+        "qa.json 条目扩展：{ q, a, citations: [{ docName, snippet, chunkId, score }] }",
+        "搜索验证：英文Electron→2结果，中文渲染进程→1结果，无匹配→0结果",
+        "init.sh 通过，Electron v42.1.0 可执行"
+      ],
+      "notes": ""
     }
   ]
 }

@@ -25,7 +25,13 @@ function formatMtime(iso) {
 }
 
 function updateMeta(info) {
-  docMeta.textContent = `大小: ${formatFileSize(info.size)} | 修改时间: ${formatMtime(info.mtime)}`;
+  const parts = [
+    `大小: ${formatFileSize(info.size)}`,
+    `修改: ${formatMtime(info.mtime)}`,
+  ];
+  if (info.wordCount !== undefined) parts.push(`字数: ${info.wordCount}`);
+  if (info.paragraphCount !== undefined) parts.push(`段落: ${info.paragraphCount}`);
+  docMeta.textContent = parts.join(' | ');
 }
 
 function enterViewMode(text) {
@@ -63,7 +69,8 @@ async function openDoc(doc) {
   docTitle.textContent = doc.name;
   const text = await window.kbAPI.readDocument(doc.path);
   const info = await window.kbAPI.getDocumentInfo(doc.path);
-  updateMeta(info);
+  const meta = await window.kbAPI.getDocumentMetadata(doc.name);
+  updateMeta({ ...info, wordCount: meta?.wordCount, paragraphCount: meta?.paragraphCount });
   enterViewMode(text);
   loadDocList();
 }
@@ -87,9 +94,12 @@ document.getElementById('btn-save-doc').addEventListener('click', async () => {
   if (!currentDoc) return;
   const content = isEditMode ? docContent.value : docViewContent.textContent;
   await window.kbAPI.saveDocument({ name: currentDoc.name, content });
+  await window.kbAPI.chunkDocument({ name: currentDoc.name, content });
+  const extracted = await window.kbAPI.extractMetadata({ name: currentDoc.name, content });
   const info = await window.kbAPI.getDocumentInfo(currentDoc.path);
-  updateMeta(info);
+  updateMeta({ ...info, wordCount: extracted.wordCount, paragraphCount: extracted.paragraphCount });
   enterViewMode(content);
+  loadIndexStats();
   alert('已保存');
 });
 
@@ -107,8 +117,15 @@ document.getElementById('btn-import-doc').addEventListener('click', async () => 
   const imported = await window.kbAPI.importDocument();
   if (imported.length > 0) {
     await window.kbAPI.logImport(imported);
+    // 对每个导入的文档进行分块 + 提取元数据
+    for (const doc of imported) {
+      const content = await window.kbAPI.readDocument(doc.path);
+      await window.kbAPI.chunkDocument({ name: doc.name, content });
+      await window.kbAPI.extractMetadata({ name: doc.name, content });
+    }
     alert(`已导入 ${imported.length} 个文件`);
     loadDocList();
+    loadIndexStats();
   }
 });
 
@@ -125,7 +142,15 @@ async function loadQA() {
   items.forEach((item) => {
     const div = document.createElement('div');
     div.className = 'qa-item';
-    div.innerHTML = `<div class="q">Q: ${escapeHtml(item.q)}</div><div class="a">A: ${escapeHtml(item.a)}</div>`;
+    let html = `<div class="q">Q: ${escapeHtml(item.q)}</div><div class="a">A: ${escapeHtml(item.a)}</div>`;
+    if (item.citations && item.citations.length > 0) {
+      html += '<div class="citations"><span class="citation-label">引用来源：</span><ul>';
+      for (const c of item.citations) {
+        html += `<li><strong>${escapeHtml(c.docName)}</strong>: "${escapeHtml(c.snippet)}"</li>`;
+      }
+      html += '</ul></div>';
+    }
+    div.innerHTML = html;
     qaList.appendChild(div);
   });
 }
@@ -140,11 +165,33 @@ document.getElementById('btn-add-qa').addEventListener('click', async () => {
   const q = qaQuestion.value.trim();
   const a = qaAnswer.value.trim();
   if (!q || !a) return;
-  await window.kbAPI.addQA({ q, a });
+  // 搜索相关文档块作为引用来源
+  const citations = await window.kbAPI.searchChunks(q);
+  await window.kbAPI.addQA({ q, a, citations });
   qaQuestion.value = '';
   qaAnswer.value = '';
   loadQA();
 });
 
+async function loadIndexStats() {
+  const stats = await window.kbAPI.getIndexStats();
+  const { totalDocs, indexedDocs, totalChunks } = stats;
+  const docRatio = totalDocs > 0 ? Math.round((indexedDocs / totalDocs) * 100) : 0;
+  const statusText = document.getElementById('index-status-text');
+  const detail = document.getElementById('index-detail');
+  if (totalDocs === 0) {
+    statusText.textContent = '就绪';
+    statusText.style.color = '#a6adc8';
+  } else if (docRatio < 100) {
+    statusText.textContent = docRatio + '%';
+    statusText.style.color = '#f9e2af';
+  } else {
+    statusText.textContent = '完成';
+    statusText.style.color = '#a6e3a1';
+  }
+  detail.textContent = `文档: ${indexedDocs}/${totalDocs} | 块: ${totalChunks}`;
+}
+
 loadDocList();
 loadQA();
+loadIndexStats();

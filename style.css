@@ -66,3 +66,23 @@ button.danger { background: #f38ba8; }
 }
 #qa-input-area input:focus { border-color: #89b4fa; }
 #qa-input-area button { white-space: nowrap; }
+
+#index-status {
+  padding: 10px 16px; border-top: 1px solid #313244;
+  background: #11111b; font-size: 12px;
+}
+.index-stat-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 4px;
+}
+#index-status-text { color: #a6e3a1; font-weight: 600; }
+#index-detail { color: #a6adc8; }
+
+.citations {
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid #45475a; font-size: 12px;
+}
+.citation-label { color: #f9e2af; font-weight: 600; }
+.citations ul { margin: 4px 0 0 16px; padding: 0; }
+.citations li { margin-bottom: 3px; color: #bac2de; }
+.citations strong { color: #89b4fa; }
