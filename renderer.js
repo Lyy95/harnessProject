@@ -192,6 +192,23 @@ async function loadIndexStats() {
   detail.textContent = `文档: ${indexedDocs}/${totalDocs} | 块: ${totalChunks}`;
 }
 
+async function ensureAllIndexed() {
+  const docs = await window.kbAPI.getDocuments();
+  for (const doc of docs) {
+    const chunks = await window.kbAPI.getDocumentChunks(doc.name);
+    if (chunks.length === 0) {
+      const content = await window.kbAPI.readDocument(doc.path);
+      await window.kbAPI.chunkDocument({ name: doc.name, content });
+    }
+    const meta = await window.kbAPI.getDocumentMetadata(doc.name);
+    if (!meta) {
+      const content = await window.kbAPI.readDocument(doc.path);
+      await window.kbAPI.extractMetadata({ name: doc.name, content });
+    }
+  }
+}
+
+await ensureAllIndexed();
 loadDocList();
 loadQA();
 loadIndexStats();
