@@ -86,3 +86,27 @@ button.danger { background: #f38ba8; }
 .citations ul { margin: 4px 0 0 16px; padding: 0; }
 .citations li { margin-bottom: 3px; color: #bac2de; }
 .citations strong { color: #89b4fa; }
+
+#conversation-selector {
+  padding: 6px 12px; background: #181825;
+  border-bottom: 1px solid #313244;
+}
+#conv-list { margin-bottom: 4px; }
+.conv-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; cursor: pointer; border-radius: 4px;
+  margin: 1px 0; font-size: 12px;
+  transition: background 0.15s;
+}
+.conv-item:hover { background: #313244; }
+.conv-item.active { background: #45475a; }
+.conv-item .conv-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-item .conv-count { color: #a6adc8; font-size: 11px; }
+.conv-item .conv-delete {
+  padding: 1px 6px; font-size: 10px;
+  background: #f38ba8; color: #1e1e2e;
+  border: none; border-radius: 3px; cursor: pointer;
+  visibility: hidden;
+}
+.conv-item:hover .conv-delete { visibility: visible; }
+#btn-new-conv { font-size: 11px; padding: 3px 10px; width: 100%; }

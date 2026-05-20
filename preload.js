@@ -18,4 +18,9 @@ contextBridge.exposeInMainWorld('kbAPI', {
   getDocumentMetadata: (docName) => ipcRenderer.invoke('get-document-metadata', docName),
   getIndexStats: () => ipcRenderer.invoke('get-index-stats'),
   searchChunks: (query) => ipcRenderer.invoke('search-chunks', query),
+  createConversation: (name) => ipcRenderer.invoke('create-conversation', { name }),
+  getConversations: () => ipcRenderer.invoke('get-conversations'),
+  getConversation: (id) => ipcRenderer.invoke('get-conversation', { id }),
+  addQAToConversation: (conversationId, qa) => ipcRenderer.invoke('add-qa-to-conversation', { conversationId, qa }),
+  deleteConversation: (id) => ipcRenderer.invoke('delete-conversation', { id }),
 });

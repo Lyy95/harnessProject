@@ -345,8 +345,25 @@
         "关闭应用重新启动，确认所有对话和历史问答仍然存在。",
         "删除一个对话，确认该对话及其中所有问答被移除。"
       ],
-      "evidence": [],
-      "notes": ""
+      "evidence": [
+        "main.js: 新增 readConversations()（含 try-catch + logger.error）/ writeConversations()",
+        "main.js: 新增 migrateIfNeeded() — ensureDataDir() 末尾调用，检查 conversations.json 不存在时从 qa.json 迁移",
+        "main.js: 新增 5 个 IPC handlers — create-conversation / get-conversations / get-conversation / add-qa-to-conversation / delete-conversation",
+        "main.js: get-conversations 返回摘要（id/name/createdAt/qaCount），无对话时自动创建「默认对话」",
+        "main.js: create-conversation 对空/空白名称默认为「未命名对话」",
+        "main.js: 旧 get-qa / add-qa handler 保留向后兼容——转发到默认对话，conversations.json 不存在时回退读 qa.json",
+        "preload.js: 暴露 5 个新 API（createConversation/getConversations/getConversation/addQAToConversation/deleteConversation），现共 22 个方法",
+        "index.html: qa-panel 内新增 #conversation-selector（#conv-list + #btn-new-conv），位于 panel-header 和 qa-list 之间",
+        "style.css: 新增 #conversation-selector / .conv-item / .conv-item.active / .conv-name / .conv-count / .conv-delete / #btn-new-conv 样式",
+        "renderer.js: 新增 activeConversationId 状态 + loadConversations() + switchConversation() + renderConvList() + renderQAList() + deleteConversationById()",
+        "renderer.js: loadQA() 改为按 activeConversationId 获取对话 QA",
+        "renderer.js: btn-add-qa 改为 addQAToConversation(activeConversationId, ...)，添加后刷新对话列表更新 qaCount",
+        "renderer.js: switchConversation() 含异步竞态保护（渲染前检查 activeConversationId 是否仍匹配 targetId）",
+        "renderer.js: 对话创建空名/纯空格拦截（renderer 端 trim 检查），删除活跃对话自动回退",
+        "renderer.js: 启动流程改为 await loadConversations() → loadQA()",
+        "init.sh 通过，check-architecture.sh 通过（0 违规）"
+      ],
+      "notes": "生成者实现完成，等待评估者评审（按 sprint-plan.md 8 步实现）。状态保留 not_started。"
     }
   ]
 }

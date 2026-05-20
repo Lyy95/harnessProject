@@ -10,8 +10,11 @@ const qaList = document.getElementById('qa-list');
 const qaQuestion = document.getElementById('qa-question');
 const qaAnswer = document.getElementById('qa-answer');
 
+const convList = document.getElementById('conv-list');
+
 let currentDoc = null;
 let isEditMode = false;
+let activeConversationId = null;
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
@@ -136,10 +139,91 @@ document.getElementById('btn-new-doc').addEventListener('click', async () => {
   loadDocList();
 });
 
-async function loadQA() {
-  const items = await window.kbAPI.getQA();
-  qaList.innerHTML = '';
+async function loadConversations() {
+  const summaries = await window.kbAPI.getConversations();
+  // 如果列表为空，自动创建默认对话
+  if (summaries.length === 0) {
+    const conv = await window.kbAPI.createConversation('默认对话');
+    activeConversationId = conv.id;
+    renderConvList([{ id: conv.id, name: conv.name, createdAt: conv.createdAt, qaCount: 0 }]);
+    return;
+  }
+  // 如果当前活跃对话已被删除（不在列表中），回退到第一个
+  if (activeConversationId && !summaries.find(s => s.id === activeConversationId)) {
+    activeConversationId = summaries[0].id;
+  }
+  // 如果尚未设置活跃对话，默认选中第一个
+  if (!activeConversationId) {
+    activeConversationId = summaries[0].id;
+  }
+  renderConvList(summaries);
+}
+
+function renderConvList(summaries) {
+  convList.innerHTML = '';
+  summaries.forEach((s) => {
+    const div = document.createElement('div');
+    div.className = 'conv-item';
+    if (s.id === activeConversationId) div.classList.add('active');
+    div.innerHTML = `
+      <span class="conv-name">${escapeHtml(s.name)}</span>
+      <span class="conv-count">(${s.qaCount})</span>
+      <button class="conv-delete danger" data-conv-id="${s.id}">删除</button>
+    `;
+    // 点击对话项切换（排除删除按钮）
+    div.addEventListener('click', (e) => {
+      if (e.target.classList.contains('conv-delete')) return;
+      switchConversation(s.id);
+    });
+    // 删除按钮事件
+    div.querySelector('.conv-delete').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteConversationById(s.id);
+    });
+    convList.appendChild(div);
+  });
+}
+
+async function switchConversation(id) {
+  const targetId = id;
+  activeConversationId = targetId;
+  renderConvListFromCache(targetId);
+  const conv = await window.kbAPI.getConversation(targetId);
+  // 防止异步竞态：请求返回时检查 id 是否仍匹配
+  if (activeConversationId !== targetId) return;
+  renderQAList(conv ? conv.qa : []);
+}
+
+function renderConvListFromCache(activeId) {
+  // 仅更新 .active 高亮，不重新获取数据
+  const items = convList.querySelectorAll('.conv-item');
   items.forEach((item) => {
+    const delBtn = item.querySelector('.conv-delete');
+    if (delBtn && delBtn.dataset.convId === activeId) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+async function deleteConversationById(id) {
+  const conv = await window.kbAPI.getConversation(id);
+  if (!conv) return;
+  if (!confirm(`确定删除对话「${conv.name}」及其所有问答？`)) return;
+  await window.kbAPI.deleteConversation(id);
+  // 如果删除的是当前活跃对话，回退到第一个剩余对话
+  if (activeConversationId === id) {
+    activeConversationId = null;
+  }
+  await loadConversations();
+  // 如果所有对话被删，loadConversations 已自动创建默认对话并设置 activeConversationId
+  loadQA();
+}
+
+function renderQAList(qaItems) {
+  qaList.innerHTML = '';
+  qaItems.forEach((item) => {
     const div = document.createElement('div');
     div.className = 'qa-item';
     let html = `<div class="q">Q: ${escapeHtml(item.q)}</div><div class="a">A: ${escapeHtml(item.a)}</div>`;
@@ -155,6 +239,13 @@ async function loadQA() {
   });
 }
 
+async function loadQA() {
+  if (!activeConversationId) return;
+  const conv = await window.kbAPI.getConversation(activeConversationId);
+  if (!conv) return;
+  renderQAList(conv.qa);
+}
+
 function escapeHtml(str) {
   const el = document.createElement('span');
   el.textContent = str;
@@ -165,11 +256,24 @@ document.getElementById('btn-add-qa').addEventListener('click', async () => {
   const q = qaQuestion.value.trim();
   const a = qaAnswer.value.trim();
   if (!q || !a) return;
+  if (!activeConversationId) return;
   // 搜索相关文档块作为引用来源
   const citations = await window.kbAPI.searchChunks(q);
-  await window.kbAPI.addQA({ q, a, citations });
+  await window.kbAPI.addQAToConversation(activeConversationId, { q, a, citations });
   qaQuestion.value = '';
   qaAnswer.value = '';
+  loadQA();
+  // 刷新对话列表以更新 qaCount
+  const summaries = await window.kbAPI.getConversations();
+  renderConvList(summaries);
+});
+
+document.getElementById('btn-new-conv').addEventListener('click', async () => {
+  const name = prompt('输入对话名称：');
+  if (!name || !name.trim()) return;
+  const conv = await window.kbAPI.createConversation(name.trim());
+  activeConversationId = conv.id;
+  await loadConversations();
   loadQA();
 });
 
@@ -209,6 +313,7 @@ async function ensureAllIndexed() {
 }
 
 await ensureAllIndexed();
+await loadConversations();
 loadDocList();
 loadQA();
 loadIndexStats();
