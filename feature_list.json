@@ -99,14 +99,20 @@
       "area": "documents",
       "title": "文档导入——从本地文件系统导入文档",
       "user_visible_behavior": "用户点击「导入」按钮，选择本地文件，文件被复制到知识库文档目录并在列表中显示。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "点击导入按钮，确认弹出文件选择对话框。",
         "选择一个或多个文件，确认文件出现在文档列表中。",
         "打开导入的文件，确认内容完整。"
       ],
-      "evidence": [],
-      "notes": "需要 dialog.showOpenDialog + fs.copyFileSync"
+      "evidence": [
+        "main.js: 新增 import-document handler，dialog.showOpenDialog + fs.copyFileSync",
+        "preload.js: 暴露 importDocument() API",
+        "index.html: 左侧面板新增加「导入」按钮",
+        "renderer.js: btn-import-doc 事件绑定，导入后刷新列表",
+        "init.sh 通过，Electron v42.1.0 可执行"
+      ],
+      "notes": "会话A只完成了kb-005，kb-006和kb-007留给下个会话"
     },
     {
       "id": "kb-006",

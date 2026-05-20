@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -81,6 +81,26 @@ ipcMain.handle('add-qa', (_event, qa) => {
   items.push(qa);
   fs.writeFileSync(qaFile, JSON.stringify(items, null, 2));
   return items;
+});
+
+ipcMain.handle('import-document', async () => {
+  const result = await dialog.showOpenDialog({
+    title: '导入文档',
+    filters: [{ name: '文档文件', extensions: ['txt', 'md', 'json', 'html', 'css', 'js', '*'] }],
+    properties: ['openFile', 'multiSelections'],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return [];
+
+  const docsDir = path.join(dataDir, 'documents');
+  const imported = [];
+  for (const filePath of result.filePaths) {
+    const name = path.basename(filePath);
+    const destPath = path.join(docsDir, name);
+    fs.copyFileSync(filePath, destPath);
+    imported.push({ name, path: destPath });
+  }
+  return imported;
 });
 
 ipcMain.handle('get-data-dir', () => dataDir);
