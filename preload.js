@@ -8,5 +8,8 @@ contextBridge.exposeInMainWorld('kbAPI', {
   getQA: () => ipcRenderer.invoke('get-qa'),
   addQA: (qa) => ipcRenderer.invoke('add-qa', qa),
   importDocument: () => ipcRenderer.invoke('import-document'),
+  getDocumentInfo: (filePath) => ipcRenderer.invoke('get-document-info', filePath),
+  getImports: () => ipcRenderer.invoke('get-imports'),
+  logImport: (files) => ipcRenderer.invoke('log-import', files),
   getDataDir: () => ipcRenderer.invoke('get-data-dir'),
 });

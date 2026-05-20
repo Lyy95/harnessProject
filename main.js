@@ -103,4 +103,29 @@ ipcMain.handle('import-document', async () => {
   return imported;
 });
 
+ipcMain.handle('get-document-info', (_event, filePath) => {
+  const stats = fs.statSync(filePath);
+  return {
+    name: path.basename(filePath),
+    size: stats.size,
+    modified: stats.mtime.toISOString(),
+  };
+});
+
+ipcMain.handle('get-imports', () => {
+  const importFile = path.join(dataDir, 'imports.json');
+  if (!fs.existsSync(importFile)) return [];
+  return JSON.parse(fs.readFileSync(importFile, 'utf-8'));
+});
+
+ipcMain.handle('log-import', (_event, files) => {
+  const importFile = path.join(dataDir, 'imports.json');
+  const imports = fs.existsSync(importFile)
+    ? JSON.parse(fs.readFileSync(importFile, 'utf-8'))
+    : [];
+  imports.push({ time: new Date().toISOString(), files: files.map((f) => f.name) });
+  fs.writeFileSync(importFile, JSON.stringify(imports, null, 2));
+  return imports;
+});
+
 ipcMain.handle('get-data-dir', () => dataDir);

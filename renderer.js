@@ -2,12 +2,19 @@ const docList = document.getElementById('doc-list');
 const docViewer = document.getElementById('doc-viewer');
 const docTitle = document.getElementById('doc-title');
 const docContent = document.getElementById('doc-content');
+const docDetail = document.getElementById('doc-detail');
+const docDisplay = document.getElementById('doc-display');
+const docMetaSize = document.getElementById('doc-meta-size');
+const docMetaModified = document.getElementById('doc-meta-modified');
+const btnEditToggle = document.getElementById('btn-edit-toggle');
+const btnSaveDoc = document.getElementById('btn-save-doc');
 const qaPanel = document.getElementById('qa-panel');
 const qaList = document.getElementById('qa-list');
 const qaQuestion = document.getElementById('qa-question');
 const qaAnswer = document.getElementById('qa-answer');
 
 let currentDoc = null;
+let isEditing = false;
 
 async function loadDocList() {
   const docs = await window.kbAPI.getDocuments();
@@ -21,25 +28,71 @@ async function loadDocList() {
   });
 }
 
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function showViewMode() {
+  isEditing = false;
+  docDetail.classList.remove('hidden');
+  docContent.classList.add('hidden');
+  btnEditToggle.textContent = '编辑';
+  btnSaveDoc.style.display = 'none';
+}
+
+function showEditMode() {
+  isEditing = true;
+  docDetail.classList.add('hidden');
+  docContent.classList.remove('hidden');
+  btnEditToggle.textContent = '查看';
+  btnSaveDoc.style.display = '';
+}
+
+btnEditToggle.addEventListener('click', () => {
+  if (!currentDoc) return;
+  if (isEditing) {
+    docContent.value = docDisplay.textContent;
+    showViewMode();
+  } else {
+    docContent.value = docDisplay.textContent;
+    showEditMode();
+  }
+});
+
 async function openDoc(doc) {
   currentDoc = doc;
   docViewer.classList.remove('hidden');
   qaPanel.style.display = 'none';
   docTitle.textContent = doc.name;
-  docContent.value = await window.kbAPI.readDocument(doc.path);
+
+  const content = await window.kbAPI.readDocument(doc.path);
+  const info = await window.kbAPI.getDocumentInfo(doc.path);
+  docDisplay.textContent = content;
+  docContent.value = content;
+  docMetaSize.textContent = '大小: ' + formatSize(info.size);
+  docMetaModified.textContent = '修改: ' + new Date(info.modified).toLocaleString('zh-CN');
+  showViewMode();
   loadDocList();
 }
 
 document.getElementById('btn-close-doc').addEventListener('click', () => {
   currentDoc = null;
+  isEditing = false;
   docViewer.classList.add('hidden');
   qaPanel.style.display = '';
   loadDocList();
 });
 
-document.getElementById('btn-save-doc').addEventListener('click', async () => {
+btnSaveDoc.addEventListener('click', async () => {
   if (!currentDoc) return;
   await window.kbAPI.saveDocument({ name: currentDoc.name, content: docContent.value });
+  docDisplay.textContent = docContent.value;
+  const info = await window.kbAPI.getDocumentInfo(currentDoc.path);
+  docMetaSize.textContent = '大小: ' + formatSize(info.size);
+  docMetaModified.textContent = '修改: ' + new Date(info.modified).toLocaleString('zh-CN');
+  showViewMode();
   alert('已保存');
 });
 
@@ -56,6 +109,7 @@ document.getElementById('btn-delete-doc').addEventListener('click', async () => 
 document.getElementById('btn-import-doc').addEventListener('click', async () => {
   const imported = await window.kbAPI.importDocument();
   if (imported.length > 0) {
+    await window.kbAPI.logImport(imported);
     alert(`已导入 ${imported.length} 个文件`);
     loadDocList();
   }

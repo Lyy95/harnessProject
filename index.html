@@ -24,12 +24,20 @@
         <div class="panel-header">
           <h2 id="doc-title"></h2>
           <div>
+            <button id="btn-edit-toggle">编辑</button>
             <button id="btn-save-doc">保存</button>
             <button id="btn-delete-doc" class="danger">删除</button>
             <button id="btn-close-doc">关闭</button>
           </div>
         </div>
-        <textarea id="doc-content"></textarea>
+        <div id="doc-detail">
+          <div class="doc-meta">
+            <span id="doc-meta-size"></span>
+            <span id="doc-meta-modified"></span>
+          </div>
+          <div id="doc-display"></div>
+        </div>
+        <textarea id="doc-content" class="hidden"></textarea>
       </div>
       <div id="qa-panel">
         <div class="panel-header"><h2>问答面板</h2></div>
