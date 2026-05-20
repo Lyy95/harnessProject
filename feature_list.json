@@ -337,7 +337,7 @@
       "area": "qa",
       "title": "多轮对话历史——创建、切换、查看对话线程",
       "user_visible_behavior": "用户可以在问答面板创建多个对话线程，每个线程包含独立的问答历史，可在不同对话间切换，对话数据持久化存储。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "创建新对话，输入名称，确认对话列表中显示新对话。",
         "在多轮对话中依次提问多个问题，确认所有问答按顺序保存在当前对话中。",
@@ -361,9 +361,10 @@
         "renderer.js: switchConversation() 含异步竞态保护（渲染前检查 activeConversationId 是否仍匹配 targetId）",
         "renderer.js: 对话创建空名/纯空格拦截（renderer 端 trim 检查），删除活跃对话自动回退",
         "renderer.js: 启动流程改为 await loadConversations() → loadQA()",
-        "init.sh 通过，check-architecture.sh 通过（0 违规）"
+        "init.sh 通过，check-architecture.sh 通过（0 违规）",
+        "评估者评审：22/22 Accept，8 步与 sprint-plan 一致，13 个边缘情况全处理"
       ],
-      "notes": "生成者实现完成，等待评估者评审（按 sprint-plan.md 8 步实现）。状态保留 not_started。"
+      "notes": "评估者评分 22/22。唯一发现：deleteConversationById 中 loadQA() 缺 await（不影响功能）。"
     }
   ]
 }
