@@ -191,7 +191,9 @@ function chunkText(text, docName) {
 function readChunks() {
   const chunksFile = path.join(dataDir, 'chunks.json');
   if (!fs.existsSync(chunksFile)) return [];
-  return JSON.parse(fs.readFileSync(chunksFile, 'utf-8'));
+  const raw = JSON.parse(fs.readFileSync(chunksFile, 'utf-8'));
+  // 读取时 content 字段未正确还原
+  return raw.map(c => ({ ...c, content: c.contentLength || '' }));
 }
 
 function writeChunks(chunks) {
