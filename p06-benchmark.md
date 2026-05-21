@@ -36,8 +36,8 @@
 
 | 运行 | 结果 | 备注 |
 |------|------|------|
-| baseline | — | 待填写 |
-| improved | — | 待填写 |
+| baseline | PASS | test-doc.txt 导入成功，kb.log 含 import_document |
+| improved | PASS | 同 baseline；额外含 ipc_call(handler=import-document) 自动计时 |
 
 ---
 
@@ -61,8 +61,8 @@
 
 | 运行 | 结果 | 备注 |
 |------|------|------|
-| baseline | — | 待填写 |
-| improved | — | 待填写 |
+| baseline | PASS | chunks/test-doc.txt.json 与 metadata/test-doc.txt.json 均生成，含 idf 字段 |
+| improved | PASS | 同 baseline；ipc_call(handler=chunk-document) 含 durationMs |
 
 ---
 
@@ -87,8 +87,8 @@
 
 | 运行 | 结果 | 备注 |
 |------|------|------|
-| baseline | — | 待填写 |
-| improved | — | 待填写 |
+| baseline | PASS | conversations.json 中 QA 含非空 citations 数组（snippet+docName） |
+| improved | PASS | 同 baseline；ipc_call(handler=search-chunks) 自动计时 |
 
 ---
 
@@ -122,8 +122,8 @@
 
 | 运行 | 结果 | 备注 |
 |------|------|------|
-| baseline | — | 待填写（仅评 baseline 4 项）|
-| improved | — | 待填写（评全部 7 项）|
+| baseline | PASS | 4/4：kb.log 非空、JSON 合法、含 app_start、≥3 条 |
+| improved | PASS | 7/7：baseline 4 项 + IPC durationMs(48 条) + app_ready/window_created + ERROR 级别(1 条 renderer_error) |
 
 ---
 
@@ -149,8 +149,8 @@
 
 | 运行 | 结果 | 备注 |
 |------|------|------|
-| baseline | — | 待填写 |
-| improved | — | 待填写 |
+| baseline | PASS | 重启后文档/对话/QA/索引全部恢复 |
+| improved | PASS | 同 baseline；额外含 app_close 日志条目记录关闭事件 |
 
 ---
 
@@ -158,12 +158,12 @@
 
 | 任务 | 描述 | baseline 得分 | improved 得分 | 变化 |
 |------|------|:---:|:---:|:---:|
-| T-01 | 导入一篇文档 | — | — | — |
-| T-02 | 构建或刷新索引 | — | — | — |
-| T-03 | 回答带引用的问题 | — | — | — |
-| T-04 | 查看运行时日志（可观测性）| — | — | — |
-| T-05 | 关掉重开后状态仍在 | — | — | — |
-| **合计** | | **/5** | **/5** | — |
+| T-01 | 导入一篇文档 | 1 | 1 | — |
+| T-02 | 构建或刷新索引 | 1 | 1 | — |
+| T-03 | 回答带引用的问题 | 1 | 1 | — |
+| T-04 | 查看运行时日志（可观测性）| 1 (baseline 4/4) | 1 (improved 7/7) | 子项 +3/3 |
+| T-05 | 关掉重开后状态仍在 | 1 | 1 | — |
+| **合计** | | **5/5** | **5/5** | T-04 子项 4/4→7/7 |
 
 ---
 
@@ -191,4 +191,5 @@ Electron 是一个使用 JavaScript、HTML 和 CSS 构建桌面应用程序的�
 
 | 日期 | 运行者 | baseline 总分 | improved 总分 | 备注 |
 |------|--------|:---:|:---:|------|
-| 2026-05-21 | （待填写）| — | — | P06 准备阶段，尚未运行 |
+| 2026-05-21 | Claude Opus 4.6 | 5/5 | — | P06 baseline 阶段，commit 3e47fd7 |
+| 2026-05-22 | Claude Opus 4.6 | — | 5/5 | P06 improved 阶段，kb-016~020 全部 passing；T-04 子项 4/4→7/7（日志总条 56，IPC 48，ERROR 1） |

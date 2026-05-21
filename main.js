@@ -37,6 +37,9 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
+  win.once('ready-to-show', () => {
+    if (logger) logger.info('window_created', { width: 1200, height: 800 });
+  });
 }
 
 app.whenReady().then(() => {
@@ -44,6 +47,7 @@ app.whenReady().then(() => {
   logger = createLogger(dataDir);
   logger.info('app_start', { dataDir, electronVersion: process.versions.electron });
   createWindow();
+  logger.info('app_ready', { electronVersion: process.versions.electron });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -51,8 +55,20 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  if (logger) logger.info('app_close', { platform: process.platform });
   if (process.platform !== 'darwin') app.quit();
 });
+
+// kb-017: 自动包装所有 IPC handler，记录 name + durationMs
+const _handle = ipcMain.handle.bind(ipcMain);
+ipcMain.handle = function (name, fn) {
+  return _handle(name, async function (_event, ...args) {
+    const start = Date.now();
+    const result = await Promise.resolve(fn.call(this, _event, ...args));
+    if (logger) logger.info('ipc_call', { handler: name, durationMs: Date.now() - start });
+    return result;
+  });
+};
 
 ipcMain.handle('get-documents', () => {
   const docsDir = path.join(dataDir, 'documents');
@@ -460,4 +476,46 @@ ipcMain.handle('delete-conversation', (_event, { id }) => {
   writeConversations(convs);
   logger.info('delete_conversation', { id: deleted.id, name: deleted.name });
   return { success: true };
+});
+
+// kb-018: 全局错误捕获 — 主进程
+process.on('uncaughtException', (err) => {
+  if (logger) logger.error('uncaught_exception', { message: err.message, stack: err.stack });
+});
+
+process.on('unhandledRejection', (reason) => {
+  if (logger) logger.error('unhandled_rejection', { reason: String(reason) });
+});
+
+// kb-018: 接收渲染进程转发的错误
+ipcMain.handle('report-renderer-error', (_event, error) => {
+  if (logger) logger.error('renderer_error', error);
+  return { success: true };
+});
+
+// kb-019: 运行时指标
+const appStartTime = Date.now();
+ipcMain.handle('get-runtime-metrics', () => {
+  const logFile = path.join(dataDir, 'kb.log');
+  let logCount = 0, errorCount = 0, totalIpcDuration = 0, ipcCount = 0;
+  if (fs.existsSync(logFile)) {
+    const lines = fs.readFileSync(logFile, 'utf-8').split('\n').filter(l => l.trim());
+    logCount = lines.length;
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        if (entry.level === 'ERROR') errorCount++;
+        if (entry.message === 'ipc_call' && entry.data && entry.data.durationMs) {
+          totalIpcDuration += entry.data.durationMs;
+          ipcCount++;
+        }
+      } catch (_) {}
+    }
+  }
+  return {
+    logCount,
+    errorCount,
+    avgIpcDuration: ipcCount > 0 ? Math.round(totalIpcDuration / ipcCount) : 0,
+    uptime: Math.round((Date.now() - appStartTime) / 1000),
+  };
 });

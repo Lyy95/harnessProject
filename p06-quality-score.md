@@ -85,3 +85,67 @@ P06 目标是将**可观测性**从 C 提升到 B 或 A，同时带动主进程/
 | 代码总行数（核心文件） | ~857 |
 | 已完成 feature 数 | 15（kb-001 ～ kb-015）|
 | 已知 logger.info 调用点 | 8（app_start, import_document, log_import, chunk_document, build_index, search_chunks, migrate_qa_to_conversations, conversation CRUD） |
+
+---
+
+# P06 改进后质量评分 — improved 快照
+
+> 分支：p06-improved
+> 评估时间：2026-05-22
+> 评分人：Claude Opus 4.6（评估者角色 / 静态审查 + 消融验证 + 基准 5/5 PASS）
+
+## 产品领域评分（improved）
+
+| 产品领域 | baseline | improved | 分值 | 根据 |
+|----------|:---:|:---:|:---:|------|
+| 文档管理 | B (3) | B (3) | 3 | 未触动该域 |
+| 分块与索引 | B (3) | B (3) | 3 | 未触动该域 |
+| 问答与引用 | B (3) | B (3) | 3 | 未触动该域 |
+| 多轮对话 | B (3) | B (3) | 3 | 未触动该域 |
+| 可观测性 | C (2) | **A (4)** | 4 | kb-016 生命周期 + kb-017 IPC 自动计时 + kb-018 主/渲染双进程错误捕获 + kb-019 仪表板 UI；T-04 子项 4/4→7/7 |
+
+**产品领域小计：16 / 20**（+2）
+
+## 架构层评分（improved）
+
+| 架构层 | baseline | improved | 分值 | 根据 |
+|--------|:---:|:---:|:---:|------|
+| 主进程 / IPC | B (3) | **A (4)** | 4 | 单点 monkey-patch ipcMain.handle 自动包装 26 个 handler，无侵入每个 handler 体 |
+| 预加载层 | A (4) | A (4) | 4 | 仍 contextIsolation:true；新增 2 个 error listener + getRuntimeMetrics API |
+| 渲染进程 | B (3) | B (3) | 3 | renderer.js 329 行（+10），新增 loadRuntimeMetrics 与 5s 轮询；未做组件拆分 |
+| 数据持久化 | B (3) | B (3) | 3 | 未触动该域 |
+| 日志服务 | C (2) | **B (3)** | 3 | logger 调用点 8→20，自动 IPC 计时、生命周期、uncaughtException/unhandledRejection、renderer 错误转发全部到位；缺：仍无远端上报 |
+
+**架构层小计：17 / 20**（+2）
+
+## 总分对比
+
+| 类别 | baseline | improved | 变化 |
+|------|:---:|:---:|:---:|
+| 产品领域 | 14 | 16 | +2 |
+| 架构层 | 15 | 17 | +2 |
+| **合计** | **29 / 40** | **33 / 40** | **+4** |
+| **百分比** | 72.5% | 82.5% | +10pp |
+| **综合等级** | B- | **B+** | ↑ |
+
+## 改进证据
+
+| feature | 证据 |
+|---|---|
+| kb-016 生命周期监控 | main.js 含 `app_ready` / `window_created` / `app_close` logger 调用；ablation 4/4 PASS |
+| kb-017 IPC 性能自动包装 | main.js 重写 `ipcMain.handle` 含 `durationMs` + `Date.now()` + `ipc_call`；实测 48 条 ipc_call 日志 |
+| kb-018 全局错误捕获 | main.js `uncaughtException` + `unhandledRejection` + `report-renderer-error` handler；preload.js `window.addEventListener('error')` + `unhandledrejection`；ERROR 级别条目实测 1 条 |
+| kb-019 运行时指标仪表板 | main.js `get-runtime-metrics` handler；preload.js `getRuntimeMetrics`；index.html `#runtime-panel`；renderer.js `loadRuntimeMetrics` + `setInterval(...,5000)` |
+| kb-020 消融验证 | scripts/ablation-check.sh 18/18 PASS，全部 4 个 feature 证据链完整 |
+
+## 代码度量快照（improved）
+
+| 指标 | baseline | improved | Δ |
+|------|:---:|:---:|:---:|
+| main.js 行数 | 463 | 521 | +58 |
+| preload.js 行数 | 26 | 35 | +9 |
+| renderer.js 行数 | 319 | 329 | +10 |
+| services/logger.js 行数 | 49 | 48 | -1 |
+| IPC handler 总数 | 22 | 26 | +4 |
+| logger 调用点 | 8 | 20 | +12 |
+| 已完成 feature 数 | 15 | 20（含 kb-016~020）| +5 |

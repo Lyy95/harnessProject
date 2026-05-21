@@ -110,3 +110,13 @@ button.danger { background: #f38ba8; }
 }
 .conv-item:hover .conv-delete { visibility: visible; }
 #btn-new-conv { font-size: 11px; padding: 3px 10px; width: 100%; }
+
+#runtime-panel {
+  padding: 10px 16px; border-top: 1px solid #313244;
+  background: #11111b; font-size: 12px;
+}
+.runtime-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 3px; color: #a6adc8;
+}
+.runtime-row span:last-child { color: #89b4fa; font-weight: 600; }

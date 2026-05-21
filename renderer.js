@@ -312,8 +312,18 @@ async function ensureAllIndexed() {
   }
 }
 
+async function loadRuntimeMetrics() {
+  const metrics = await window.kbAPI.getRuntimeMetrics();
+  document.getElementById('rt-log-count').textContent = metrics.logCount;
+  document.getElementById('rt-error-count').textContent = metrics.errorCount;
+  document.getElementById('rt-avg-ipc').textContent = metrics.avgIpcDuration + 'ms';
+  document.getElementById('rt-uptime').textContent = metrics.uptime + 's';
+}
+
 await ensureAllIndexed();
 await loadConversations();
 loadDocList();
 loadQA();
 loadIndexStats();
+loadRuntimeMetrics();
+setInterval(loadRuntimeMetrics, 5000);

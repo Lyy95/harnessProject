@@ -1,5 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// kb-018: 渲染进程错误转发到主进程
+window.addEventListener('error', (e) => {
+  ipcRenderer.invoke('report-renderer-error', { message: e.message, filename: e.filename, lineno: e.lineno, colno: e.colno, type: 'window_error' });
+});
+window.addEventListener('unhandledrejection', (e) => {
+  ipcRenderer.invoke('report-renderer-error', { reason: String(e.reason), type: 'unhandled_rejection' });
+});
+
 contextBridge.exposeInMainWorld('kbAPI', {
   getDocuments: () => ipcRenderer.invoke('get-documents'),
   readDocument: (filePath) => ipcRenderer.invoke('read-document', filePath),
@@ -23,4 +31,5 @@ contextBridge.exposeInMainWorld('kbAPI', {
   getConversation: (id) => ipcRenderer.invoke('get-conversation', { id }),
   addQAToConversation: (conversationId, qa) => ipcRenderer.invoke('add-qa-to-conversation', { conversationId, qa }),
   deleteConversation: (id) => ipcRenderer.invoke('delete-conversation', { id }),
+  getRuntimeMetrics: () => ipcRenderer.invoke('get-runtime-metrics'),
 });

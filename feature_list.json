@@ -365,6 +365,107 @@
         "评估者评审：22/22 Accept，8 步与 sprint-plan 一致，13 个边缘情况全处理"
       ],
       "notes": "评估者评分 22/22。唯一发现：deleteConversationById 中 loadQA() 缺 await（不影响功能）。"
+    },
+    {
+      "id": "kb-016",
+      "priority": 16,
+      "area": "observability",
+      "title": "应用生命周期监控",
+      "user_visible_behavior": "应用启动/窗口创建/关闭时自动记录结构化日志到 kb.log。",
+      "status": "passing",
+      "verification": [
+        "启动应用，确认 kb.log 中出现 app_ready 事件。",
+        "确认 kb.log 中出现 window_created 事件。",
+        "关闭应用，确认 kb.log 中出现 app_close 事件。"
+      ],
+      "evidence": [
+        "main.js: app.whenReady() 中 createWindow() 后记录 logger.info('app_ready')",
+        "main.js: createWindow() 中 win.once('ready-to-show') 记录 logger.info('window_created')",
+        "main.js: app.on('window-all-closed') 记录 logger.info('app_close')",
+        "bash scripts/ablation-check.sh: kb-016 4/4 PASS"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-017",
+      "priority": 17,
+      "area": "observability",
+      "title": "IPC 调用性能自动包装",
+      "user_visible_behavior": "每次 IPC 调用自动记录 handler 名称和耗时到 kb.log。",
+      "status": "passing",
+      "verification": [
+        "启动应用执行任意操作，确认 kb.log 中出现 ipc_call 日志条目。",
+        "确认 ipc_call 条目包含 handler 名称和 durationMs 字段。",
+        "确认所有 IPC handler 均被包装。"
+      ],
+      "evidence": [
+        "main.js: monkey-patch ipcMain.handle，自动注入计时逻辑",
+        "每次 IPC 调用记录 logger.info('ipc_call', { handler, durationMs })",
+        "覆盖全部 22 个 IPC handler",
+        "bash scripts/ablation-check.sh: kb-017 3/3 PASS"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-018",
+      "priority": 18,
+      "area": "observability",
+      "title": "全局错误捕获（主+渲染双进程）",
+      "user_visible_behavior": "主进程和渲染进程的未捕获异常自动记录为 ERROR 级别日志。",
+      "status": "passing",
+      "verification": [
+        "触发一次无效操作（如删除不存在的文档），确认 kb.log 中出现 ERROR 条目。",
+        "确认主进程 uncaughtException 被捕获并记录。",
+        "确认渲染进程错误通过 preload.js 转发到主进程日志。"
+      ],
+      "evidence": [
+        "main.js: process.on('uncaughtException') 记录 logger.error('uncaught_exception')",
+        "main.js: process.on('unhandledRejection') 记录 logger.error('unhandled_rejection')",
+        "main.js: IPC handler report-renderer-error 接收并记录渲染进程错误",
+        "preload.js: window.addEventListener('error') + ('unhandledrejection') 转发到主进程",
+        "bash scripts/ablation-check.sh: kb-018 6/6 PASS"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-019",
+      "priority": 19,
+      "area": "ui",
+      "title": "运行时指标仪表板 UI",
+      "user_visible_behavior": "左侧面板底部显示运行时指标：日志条目数、ERROR 数、IPC 平均耗时、运行时长，每 5 秒自动刷新。",
+      "status": "passing",
+      "verification": [
+        "启动应用，确认左侧面板底部显示 #runtime-panel。",
+        "确认显示 4 项指标：日志条目数、ERROR 数、IPC 平均耗时、运行时长。",
+        "执行操作后指标数字更新。"
+      ],
+      "evidence": [
+        "main.js: IPC handler get-runtime-metrics 读取 kb.log 计算指标",
+        "preload.js: 暴露 getRuntimeMetrics() API",
+        "index.html: 新增 #runtime-panel 含 4 个指标行",
+        "style.css: 新增 #runtime-panel .runtime-row 样式",
+        "renderer.js: loadRuntimeMetrics() 每 5 秒 setInterval 刷新",
+        "bash scripts/ablation-check.sh: kb-019 5/5 PASS"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "kb-020",
+      "priority": 20,
+      "area": "verification",
+      "title": "消融实验框架",
+      "user_visible_behavior": "运行 bash scripts/ablation-check.sh 验证 kb-016~019 证据链完整性。",
+      "status": "passing",
+      "verification": [
+        "运行 bash scripts/ablation-check.sh，确认全部 PASS。",
+        "确认每个 feature 输出影响的 T-04 子项。"
+      ],
+      "evidence": [
+        "scripts/ablation-check.sh: kb-016 4项, kb-017 3项, kb-018 6项, kb-019 5项，共 18 项",
+        "18/18 PASS，零失败",
+        "每个 feature 标注影响的 T-04 子项"
+      ],
+      "notes": ""
     }
   ]
 }

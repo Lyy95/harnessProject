@@ -1,8 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:walkinglabs.github.io)",
-      "WebSearch"
+      "Bash(mv /Users/lyy/Documents/harnessProject/harnessProject/.claude /Users/lyy/Documents/harnessProject/)",
+      "Bash(mv /Users/lyy/Documents/harnessProject/harnessProject/.git /Users/lyy/Documents/harnessProject/)",
+      "Bash(mv /Users/lyy/Documents/harnessProject/harnessProject/.gitignore /Users/lyy/Documents/harnessProject/)",
+      "Bash(rmdir /Users/lyy/Documents/harnessProject/harnessProject)",
+      "WebFetch(domain:walkinglabs.github.io)"
     ]
   }
 }
